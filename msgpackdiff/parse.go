@@ -61,6 +61,7 @@ func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
 				break
 			}
 		}
+		parsed.Object = objectArray
 	case msgp.Float32Type:
 		parsed.Object, bytes, err = msgp.ReadFloat32Bytes(bytes)
 	case msgp.Float64Type:
