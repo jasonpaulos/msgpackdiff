@@ -27,36 +27,61 @@ func GetBinary(object string) ([]byte, error) {
 }
 
 // Parse parses a MessagePack encoded binary object into an in-memory data structure.
-func Parse(bytes []byte) (obj MsgpObject, err error) {
-	switch msgp.NextType(bytes) {
+func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
+	parsed.Type = msgp.NextType(bytes)
+	switch parsed.Type {
 	case msgp.StrType:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadStringBytes(bytes)
 	case msgp.BinType:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadBytesBytes(bytes, nil)
 	case msgp.MapType:
-		// TODO
+		var size int
+		size, _, bytes, err = msgp.ReadMapHeaderBytes(bytes)
+		objectMap := make(map[string]MsgpObject)
+		for size > 0 {
+			size--
+			var key string
+			key, bytes, err = msgp.ReadStringBytes(bytes)
+			if err != nil {
+				break
+			}
+			objectMap[key], bytes, err = Parse(bytes)
+			if err != nil {
+				break
+			}
+		}
+		parsed.Object = objectMap
 	case msgp.ArrayType:
-		// TODO
+		var size int
+		size, _, bytes, err = msgp.ReadArrayHeaderBytes(bytes)
+		objectArray := make([]MsgpObject, size)
+		for i := 0; i < size; i++ {
+			objectArray[i], bytes, err = Parse(bytes)
+			if err != nil {
+				break
+			}
+		}
 	case msgp.Float32Type:
-		//todo
+		parsed.Object, bytes, err = msgp.ReadFloat32Bytes(bytes)
 	case msgp.Float64Type:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadFloat64Bytes(bytes)
 	case msgp.BoolType:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadBoolBytes(bytes)
 	case msgp.IntType:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadInt64Bytes(bytes)
 	case msgp.UintType:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadUint64Bytes(bytes)
 	case msgp.NilType:
-		// TODO
+		parsed.Object = nil
 	case msgp.Complex64Type:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadComplex64Bytes(bytes)
 	case msgp.Complex128Type:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadComplex128Bytes(bytes)
 	case msgp.TimeType:
-		// TODO
+		parsed.Object, bytes, err = msgp.ReadTimeBytes(bytes)
 	default:
 		err = errors.New("Invalid MessagePack type")
 	}
+	remaining = bytes
 	return
 }
