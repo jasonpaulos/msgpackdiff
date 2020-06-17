@@ -33,6 +33,11 @@ func TestGetBinary(t *testing.T) {
 			Input:    "../test/algo_txn_binary",
 			Expected: algoTxn,
 		},
+		{
+			Name:     "base64 file",
+			Input:    "../test/algo_txn_base64",
+			Expected: algoTxn,
+		},
 	}
 
 	for _, test := range tests {

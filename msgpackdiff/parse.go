@@ -12,17 +12,25 @@ import (
 // may be a base64 encoded binary object, or the path to a binary file that contains the object as
 // its only content.
 func GetBinary(object string) ([]byte, error) {
-	decoded, b64err := base64.StdEncoding.DecodeString(object)
-	if b64err == nil {
+	decoded, err := base64.StdEncoding.DecodeString(object)
+	if err == nil {
 		return decoded, nil
 	}
 
-	content, fileErr := ioutil.ReadFile(object)
-	if fileErr != nil {
-		return []byte{}, fileErr
+	content, err := ioutil.ReadFile(object)
+	if err != nil {
+		return []byte{}, err
 	}
 
-	// TODO: what if content is not binary, but base64 encoded?
+	// attempt to decode from base64
+	maxLen := base64.StdEncoding.DecodedLen(len(content))
+	decoded = make([]byte, maxLen)
+
+	n, err := base64.StdEncoding.Decode(decoded, content)
+	if err == nil {
+		return decoded[:n], nil
+	}
+
 	return content, nil
 }
 
