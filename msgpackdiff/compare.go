@@ -47,7 +47,7 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 	case msgp.MapType:
 		mapA := a.Object.(map[string]MsgpObject)
 		mapB := b.Object.(map[string]MsgpObject)
-		if stopOnFirstDifference && len(mapA) != len(mapB) {
+		if stopOnFirstDifference && !ignoreEmpty && len(mapA) != len(mapB) {
 			equal = false
 		} else {
 			allKeys := make(map[string]bool)
@@ -64,6 +64,11 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 				valueB, okB := mapB[key]
 
 				if !okA || !okB {
+					if ignoreEmpty && ((okA && valueA.IsEmpty()) || (okB && valueB.IsEmpty())) {
+						// one map does not have an object for this field, but the other map has an
+						// empty object for the field, so they are treated as equal with ignoreEmpty
+						continue
+					}
 					equal = false
 					if stopOnFirstDifference {
 						break
