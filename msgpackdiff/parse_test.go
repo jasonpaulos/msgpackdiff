@@ -244,9 +244,9 @@ func TestParse(t *testing.T) {
 
 	for _, test := range tests {
 		runTest := func(t *testing.T) {
-			decoded, b64err := base64.StdEncoding.DecodeString(test.Input)
-			if b64err != nil {
-				t.Fatalf("Could not decode input \"%v\": %v\n", test.Input, b64err)
+			decoded, err := base64.StdEncoding.DecodeString(test.Input)
+			if err != nil {
+				t.Fatalf("Could not decode input \"%v\": %v\n", test.Input, err)
 			}
 
 			result, _, err := Parse(decoded)

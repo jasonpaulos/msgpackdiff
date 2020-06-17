@@ -21,15 +21,15 @@ func main() {
 		os.Exit(2)
 	}
 
-	binA, errA := msgpackdiff.GetBinary(args[0])
-	if errA != nil {
-		fmt.Fprintf(os.Stderr, "Failed to extract first object: %v\n", errA)
+	binA, err := msgpackdiff.GetBinary(args[0])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to extract first object: %v\n", err)
 		os.Exit(2)
 	}
 
-	binB, errB := msgpackdiff.GetBinary(args[1])
-	if errB != nil {
-		fmt.Fprintf(os.Stderr, "Failed to extract second object: %v\n", errB)
+	binB, err := msgpackdiff.GetBinary(args[1])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to extract second object: %v\n", err)
 		os.Exit(2)
 	}
 
