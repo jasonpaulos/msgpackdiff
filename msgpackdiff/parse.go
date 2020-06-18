@@ -82,6 +82,7 @@ func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
 		parsed.Object, bytes, err = msgp.ReadUint64Bytes(bytes)
 	case msgp.NilType:
 		parsed.Object = nil
+		bytes, err = msgp.ReadNilBytes(bytes)
 	case msgp.Complex64Type:
 		parsed.Object, bytes, err = msgp.ReadComplex64Bytes(bytes)
 	case msgp.Complex128Type:

@@ -220,6 +220,17 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			Name:  "{\"first_null_key\":null,\"second_null_key\":null}",
+			Input: "gq5maXJzdF9udWxsX2tlecCvc2Vjb25kX251bGxfa2V5wA==",
+			Expected: MsgpObject{
+				msgp.MapType,
+				map[string]MsgpObject{
+					"first_null_key":  {msgp.NilType, nil},
+					"second_null_key": {msgp.NilType, nil},
+				},
+			},
+		},
+		{
 			Name:  "{\"txn\":{\"amt\":5000000,\"fee\":1000,\"fv\":6000000,\"gen\":\"mainnet-v1.0\",\"gh\":\"wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8=\",\"lv\":6001000,\"note\":\"SGVsbG8gV29ybGQ=\",\"rcv\":\"GD64YIY3TWGDMCNPP553DZPPR6LDUSFQOIJVFDPPXWEG3FVOJCCDBBHU5A\",\"snd\":\"EW64GC6F24M7NDSC5R3ES4YUVE3ZXXNMARJHDCCCLIHZU6TBEOC7XRSBG4\",\"type\":\"pay\"}}",
 			Input: "gaN0eG6Ko2FtdM4ATEtAo2ZlZc0D6KJmds4AW42Ao2dlbqxtYWlubmV0LXYxLjCiZ2jZLHdHSEUyUHdkdmQ3UzEyQkw1RmFPUDIwRUdZZXNONzNrdGlDMXF6a2tpdDg9omx2zgBbkWikbm90ZbBTR1ZzYkc4Z1YyOXliR1E9o3Jjdtk6R0Q2NFlJWTNUV0dETUNOUFA1NTNEWlBQUjZMRFVTRlFPSUpWRkRQUFhXRUczRlZPSkNDREJCSFU1QaNzbmTZOkVXNjRHQzZGMjRNN05EU0M1UjNFUzRZVVZFM1pYWE5NQVJKSERDQ0NMSUhaVTZUQkVPQzdYUlNCRzSkdHlwZaNwYXk=",
 			Expected: MsgpObject{
