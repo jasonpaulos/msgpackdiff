@@ -11,7 +11,7 @@ import (
 // Compare checks two MessagePack objects for equality. The first return value will be true if and
 // only if the objects a and b are considered equivalent. If the second return value is a non-nil
 // error, then the comparison could not be completed and the first return value should be ignored.
-func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder bool) (bool, error) {
+func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder, flexibleTypes bool) (bool, error) {
 	objA, _, err := Parse(a)
 	if err != nil {
 		return false, err
@@ -26,11 +26,90 @@ func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder
 		return false, errors.New("Strict order has not been implemented yet")
 	}
 
-	return compareObjects(objA, objB, stopOnFirstDifference, ignoreEmpty), nil
+	return compareObjects(objA, objB, stopOnFirstDifference, ignoreEmpty, flexibleTypes), nil
 }
 
-func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmpty bool) (equal bool) {
+func compareNumbers(a MsgpObject, b MsgpObject) (equal bool) {
+	// make a have the smaller type so that the switch statement only has to check larger types for b
+	if a.Type > b.Type {
+		a, b = b, a
+	}
+
+	switch {
+	case a.Type == msgp.Float64Type && b.Type == msgp.Float32Type:
+		floatA := a.Object.(float64)
+		floatB := b.Object.(float32)
+		equal = floatA == float64(floatB)
+	case a.Type == msgp.Float64Type && b.Type == msgp.IntType:
+		floatA := a.Object.(float64)
+		intB := b.Object.(int64)
+		equal = floatA == float64(intB)
+	case a.Type == msgp.Float64Type && b.Type == msgp.UintType:
+		floatA := a.Object.(float64)
+		intB := b.Object.(uint64)
+		equal = floatA == float64(intB)
+	case a.Type == msgp.Float64Type && b.Type == msgp.Complex64Type:
+		floatA := a.Object.(float64)
+		complexB := b.Object.(complex64)
+		equal = complex(floatA, 0) == complex128(complexB)
+	case a.Type == msgp.Float64Type && b.Type == msgp.Complex128Type:
+		floatA := a.Object.(float64)
+		complexB := b.Object.(complex128)
+		equal = complex(floatA, 0) == complexB
+	case a.Type == msgp.Float32Type && b.Type == msgp.IntType:
+		floatA := a.Object.(float32)
+		intB := b.Object.(int64)
+		equal = floatA == float32(intB)
+	case a.Type == msgp.Float32Type && b.Type == msgp.UintType:
+		floatA := a.Object.(float32)
+		intB := b.Object.(uint64)
+		equal = floatA == float32(intB)
+	case a.Type == msgp.Float32Type && b.Type == msgp.Complex64Type:
+		floatA := a.Object.(float32)
+		complexB := b.Object.(complex64)
+		equal = complex(floatA, 0) == complexB
+	case a.Type == msgp.Float32Type && b.Type == msgp.Complex128Type:
+		floatA := a.Object.(float32)
+		complexB := b.Object.(complex128)
+		equal = complex(float64(floatA), 0) == complexB
+	case a.Type == msgp.IntType && b.Type == msgp.UintType:
+		intA := a.Object.(int64)
+		intB := b.Object.(uint64)
+		equal = intA >= 0 && uint64(intA) == intB
+	case a.Type == msgp.IntType && b.Type == msgp.Complex64Type:
+		intA := a.Object.(int64)
+		complexB := b.Object.(complex64)
+		equal = complex(float32(intA), 0) == complexB
+	case a.Type == msgp.IntType && b.Type == msgp.Complex128Type:
+		intA := a.Object.(int64)
+		complexB := b.Object.(complex128)
+		equal = complex(float64(intA), 0) == complexB
+	case a.Type == msgp.UintType && b.Type == msgp.Complex64Type:
+		intA := a.Object.(uint64)
+		complexB := b.Object.(complex64)
+		equal = complex(float32(intA), 0) == complexB
+	case a.Type == msgp.UintType && b.Type == msgp.Complex128Type:
+		intA := a.Object.(uint64)
+		complexB := b.Object.(complex128)
+		equal = complex(float64(intA), 0) == complexB
+	case a.Type == msgp.Complex64Type && b.Type == msgp.Complex128Type:
+		complexA := a.Object.(complex64)
+		complexB := b.Object.(complex128)
+		equal = complex128(complexA) == complexB
+	default:
+		// the arguments are not numbers so they can't be equal
+		equal = false
+	}
+	return
+}
+
+func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmpty, flexibleTypes bool) (equal bool) {
 	if a.Type != b.Type {
+		if flexibleTypes && compareNumbers(a, b) {
+			equal = true
+			return
+		}
+
 		equal = false
 		return
 	}
@@ -75,7 +154,7 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 					}
 				}
 
-				valuesEqual := compareObjects(valueA, valueB, stopOnFirstDifference, ignoreEmpty)
+				valuesEqual := compareObjects(valueA, valueB, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
 				if !valuesEqual {
 					equal = false
 					if stopOnFirstDifference {
@@ -111,7 +190,7 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 
 				itemA := arrayA[i]
 				itemB := arrayB[i]
-				itemsEqual := compareObjects(itemA, itemB, stopOnFirstDifference, ignoreEmpty)
+				itemsEqual := compareObjects(itemA, itemB, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
 				if !itemsEqual {
 					equal = false
 					if stopOnFirstDifference {

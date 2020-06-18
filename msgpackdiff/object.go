@@ -1,6 +1,7 @@
 package msgpackdiff
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/algorand/msgp/msgp"
@@ -10,6 +11,13 @@ import (
 type MsgpObject struct {
 	Type   msgp.Type
 	Object interface{}
+}
+
+func (obj MsgpObject) String() string {
+	if obj.Type == msgp.NilType {
+		return "null"
+	}
+	return fmt.Sprintf("%v(%v)", obj.Type, obj.Object)
 }
 
 // IsEmpty checks if the value of a MessagePack object is the zero value for its type.

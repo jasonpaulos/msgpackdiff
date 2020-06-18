@@ -36,4 +36,12 @@ The objects `[A]` and `[B]` can be any of the following:
   `{"a": 1, "b": 2}`, `{"b": 2, "a": 1}`. However with this flag, the objects would be considered
   equivalent. This affects the order of all fields in objects, regardless of whether they are in the
   top level object or subobjects.
- 
+* `--flexible-types` disables strict type comparisons. Without this flag, int, uint, float32,
+  float64, complex64, and complex128 types will never be compared to each other since they are
+  assumed to be unequal due to their type. However with this flag, values belonging to these
+  different numerical types will be cast to the larger type and compared using Go's == operator. In
+  some cases this comparison will be inaccurate, such as between int64 and float32, since neither
+  type can hold all values of the other.
+  NOTE: This flag does not change the behavior of comparing different types within the int8/16/32/64
+  family, which are always compared with each other regardless of what length they are. The same is
+  true for the uint8/16/32/64 family, but not between the int and uint families.

@@ -11,6 +11,7 @@ import (
 var brief = flag.Bool("brief", false, "Disable comparison report")
 var ignoreEmpty = flag.Bool("ignore-empty", false, "Treat missing fields as empty objects for comparison")
 var ignoreOrder = flag.Bool("ignore-order", false, "Ignore ordering of fields for comparison")
+var flexibleTypes = flag.Bool("flexible-types", false, "Compare all numerical values regardless of their type. May be inaccurate")
 
 func main() {
 	flag.Parse()
@@ -33,7 +34,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	result, err := msgpackdiff.Compare(binA, binB, *brief, *ignoreEmpty, *ignoreOrder)
+	result, err := msgpackdiff.Compare(binA, binB, *brief, *ignoreEmpty, *ignoreOrder, *flexibleTypes)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "An error occurred: %v\n", err)
