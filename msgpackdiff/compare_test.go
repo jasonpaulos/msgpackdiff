@@ -107,6 +107,18 @@ func TestCompareIgnoreEmpty(t *testing.T) {
 			Expected:     false,
 		},
 		{
+			Name:         "empty map",
+			FirstObject:  "gA==",             // {}
+			SecondObject: "gadvcHRpb25zgA==", // {"options": {}}
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty map",
+			FirstObject:  "gA==",                     // {}
+			SecondObject: "gadvcHRpb25zgaVzdGFydMM=", // {"options": {"start": true}}
+			Expected:     false,
+		},
+		{
 			Name:         "empty array",
 			FirstObject:  "gA==",             // {}
 			SecondObject: "gadmcmllbmRzkA==", // {"friends": []}
