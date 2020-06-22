@@ -12,7 +12,7 @@ type CompareTest struct {
 	Expected     bool
 }
 
-func runTestsWithOptions(t *testing.T, tests []CompareTest, stopOnFirstDifference, ignoreEmpty, ignoreOrder, flexibleTypes bool) {
+func runTestsWithOptions(t *testing.T, tests []CompareTest, ignoreEmpty, ignoreOrder, flexibleTypes bool) {
 	for _, test := range tests {
 		runTest := func(t *testing.T) {
 			firstObject, err := base64.StdEncoding.DecodeString(test.FirstObject)
@@ -25,9 +25,14 @@ func runTestsWithOptions(t *testing.T, tests []CompareTest, stopOnFirstDifferenc
 				t.Fatalf("Could not decode second object \"%v\": %v\n", test.SecondObject, err)
 			}
 
-			result, err := Compare(firstObject, secondObject, stopOnFirstDifference, ignoreEmpty, ignoreOrder, flexibleTypes)
+			result, err := Compare(firstObject, secondObject, false, ignoreEmpty, ignoreOrder, flexibleTypes)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v\n", err)
+			}
+
+			stopEarlyResult, err := Compare(firstObject, secondObject, true, ignoreEmpty, ignoreOrder, flexibleTypes)
+			if result != stopEarlyResult {
+				t.Error("Different result with stopOnFirstDifference=true\n")
 			}
 
 			if result != test.Expected {
@@ -168,7 +173,7 @@ func TestCompareDefault(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, false, false, false)
+	runTestsWithOptions(t, tests, false, false, false)
 }
 
 func TestCompareIgnoreEmpty(t *testing.T) {
@@ -307,7 +312,7 @@ func TestCompareIgnoreEmpty(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, true, false, false)
+	runTestsWithOptions(t, tests, true, false, false)
 }
 
 func TestCompareIgnoreOrderTypes(t *testing.T) {
@@ -350,7 +355,7 @@ func TestCompareIgnoreOrderTypes(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, false, true, false)
+	runTestsWithOptions(t, tests, false, true, false)
 }
 
 func TestCompareFlexibleTypes(t *testing.T) {
@@ -387,7 +392,7 @@ func TestCompareFlexibleTypes(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, false, false, true)
+	runTestsWithOptions(t, tests, false, false, true)
 }
 
 func TestLongestCommonSubsequence(t *testing.T) {
