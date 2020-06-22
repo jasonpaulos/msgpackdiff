@@ -55,6 +55,10 @@ func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
 			if err != nil {
 				break
 			}
+			if _, ok := valueMap.Values[key]; ok {
+				err = errors.New("Object has duplicate key")
+				break
+			}
 			valueMap.Order[i] = key
 			valueMap.Values[key], bytes, err = Parse(bytes)
 			if err != nil {

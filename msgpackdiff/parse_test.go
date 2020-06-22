@@ -303,3 +303,19 @@ func TestParse(t *testing.T) {
 		t.Run(test.Name, runTest)
 	}
 }
+
+func TestParseErrors(t *testing.T) {
+	t.Run("duplicate key", func(t *testing.T) {
+		input := "gqNrZXkBo2tleQI="
+
+		decoded, err := base64.StdEncoding.DecodeString(input)
+		if err != nil {
+			t.Fatalf("Could not decode input \"%v\": %v\n", input, err)
+		}
+
+		_, _, err = Parse(decoded)
+		if err == nil || err.Error() != "Object has duplicate key" {
+			t.Fatal("No error for duplicate key\n")
+		}
+	})
+}
