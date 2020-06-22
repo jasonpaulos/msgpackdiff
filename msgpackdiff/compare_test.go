@@ -38,6 +38,139 @@ func runTestsWithOptions(t *testing.T, tests []CompareTest, stopOnFirstDifferenc
 	}
 }
 
+func TestCompareDefault(t *testing.T) {
+	tests := []CompareTest{
+		{
+			Name:         "null",
+			FirstObject:  "wA==", // {}
+			SecondObject: "wA==", // {}
+			Expected:     true,
+		},
+		{
+			Name:         "empty ints",
+			FirstObject:  "AA==", // 0
+			SecondObject: "AA==", // 0
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty ints",
+			FirstObject:  "Yw==", // 99
+			SecondObject: "Yw==", // 99
+			Expected:     true,
+		},
+		{
+			Name:         "different ints",
+			FirstObject:  "AA==", // 0
+			SecondObject: "Yw==", // 99
+			Expected:     false,
+		},
+		{
+			Name:         "empty float32s",
+			FirstObject:  "ygAAAAA=", // 0.0
+			SecondObject: "ygAAAAA=", // 0.0
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty float32s",
+			FirstObject:  "yj/AAAA=", // 1.5
+			SecondObject: "yj/AAAA=", // 1.5
+			Expected:     true,
+		},
+		{
+			Name:         "different float32s",
+			FirstObject:  "ygAAAAA=", // 0.0
+			SecondObject: "yj/AAAA=", // 1.5
+			Expected:     false,
+		},
+		{
+			Name:         "empty float64s",
+			FirstObject:  "ywAAAAAAAAAA", // 0.0
+			SecondObject: "ywAAAAAAAAAA", // 0.0
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty float64s",
+			FirstObject:  "y0Az/752yLQ5", // 19.999
+			SecondObject: "y0Az/752yLQ5", // 19.999
+			Expected:     true,
+		},
+		{
+			Name:         "different float64s",
+			FirstObject:  "ywAAAAAAAAAA", // 0.0
+			SecondObject: "y0Az/752yLQ5", // 19.999
+			Expected:     false,
+		},
+		{
+			Name:         "int and float32",
+			FirstObject:  "AA==",     // 0
+			SecondObject: "ygAAAAA=", // 0.0
+			Expected:     false,
+		},
+		{
+			Name:         "int and float64",
+			FirstObject:  "AA==",         // 0
+			SecondObject: "ywAAAAAAAAAA", // 0.0
+			Expected:     false,
+		},
+		{
+			Name:         "float32 and float64",
+			FirstObject:  "ygAAAAA=",     // 0.0
+			SecondObject: "ywAAAAAAAAAA", // 0.0
+			Expected:     false,
+		},
+		{
+			Name:         "true",
+			FirstObject:  "ww==", // true
+			SecondObject: "ww==", // true
+			Expected:     true,
+		},
+		{
+			Name:         "false",
+			FirstObject:  "wg==", // false
+			SecondObject: "wg==", // false
+			Expected:     true,
+		},
+		{
+			Name:         "empty objects",
+			FirstObject:  "gA==", // {}
+			SecondObject: "gA==", // {}
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty objects",
+			FirstObject:  "gqJpZBukbmFtZaVKYXNvbg==", // {"id": 27, "name": "Jason"}
+			SecondObject: "gqJpZBukbmFtZaVKYXNvbg==", // {"id": 27, "name": "Jason"}
+			Expected:     true,
+		},
+		{
+			Name:         "different order objects",
+			FirstObject:  "gqJpZBukbmFtZaVKYXNvbg==", // {"id": 27, "name": "Jason"}
+			SecondObject: "gqRuYW1lpUphc29uomlkGw==", // {"name": "Jason", "id": 27}
+			Expected:     false,
+		},
+		{
+			Name:         "empty arrays",
+			FirstObject:  "kA==", // []
+			SecondObject: "kA==", // []
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty arrays",
+			FirstObject:  "kgEC", // [1, 2]
+			SecondObject: "kgEC", // [1, 2]
+			Expected:     true,
+		},
+		{
+			Name:         "different order arrays",
+			FirstObject:  "kgEC", // [1, 2]
+			SecondObject: "kgIB", // [2, 1]
+			Expected:     false,
+		},
+	}
+
+	runTestsWithOptions(t, tests, false, false, false, false)
+}
+
 func TestCompareIgnoreEmpty(t *testing.T) {
 	tests := []CompareTest{
 		{
@@ -174,7 +307,50 @@ func TestCompareIgnoreEmpty(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, true, true, false) // TODO: set ignoreOrder=false
+	runTestsWithOptions(t, tests, false, true, false, false)
+}
+
+func TestCompareIgnoreOrderTypes(t *testing.T) {
+	tests := []CompareTest{
+		{
+			Name:         "same order",
+			FirstObject:  "gqJpZBukbmFtZaVKYXNvbg==", // {"id": 27, "name": "Jason"}
+			SecondObject: "gqJpZBukbmFtZaVKYXNvbg==", // {"id": 27, "name": "Jason"}
+			Expected:     true,
+		},
+		{
+			Name:         "different order 2",
+			FirstObject:  "gqJpZBukbmFtZaVKYXNvbg==", // {"id": 27, "name": "Jason"}
+			SecondObject: "gqRuYW1lpUphc29uomlkGw==", // {"name": "Jason", "id": 27}
+			Expected:     true,
+		},
+		{
+			Name:         "different order 3",
+			FirstObject:  "g6NvbmUBo3R3bwKldGhyZWUD", // {"one": 1, "two": 2, "three": 3}
+			SecondObject: "g6V0aHJlZQOjb25lAaN0d28C", // {"three": 3, "one": 1, "two": 2}
+			Expected:     true,
+		},
+		{
+			Name:         "different order same objects",
+			FirstObject:  "gqV0b2RheYOjZGF5FqVtb250aAakeWVhcs0H5Kh0b21vcnJvd4OjZGF5F6Vtb250aAakeWVhcs0H5A==", // {"today": {"day": 22, "month": 6, "year": 2020}, "tomorrow": {"day": 23, "month": 6, "year": 2020}}
+			SecondObject: "gqh0b21vcnJvd4OlbW9udGgGo2RheRekeWVhcs0H5KV0b2RheYOjZGF5FqR5ZWFyzQfkpW1vbnRoBg==", // {"tomorrow": {"month": 6, "day": 23, "year": 2020}, "today": {"day": 22, "year": 2020, "month": 6}}
+			Expected:     true,
+		},
+		{
+			Name:         "different order different objects",
+			FirstObject:  "gqV0b2RheYOjZGF5FqVtb250aAakeWVhcs0H5Kh0b21vcnJvd4OjZGF5F6Vtb250aAakeWVhcs0H5A==", // {"today": {"day": 22, "month": 6, "year": 2020}, "tomorrow": {"day": 23, "month": 6, "year": 2020}}
+			SecondObject: "gqh0b21vcnJvd4OlbW9udGgGo2RheRekeWVhcs0H5aV0b2RheYOjZGF5FqR5ZWFyzQfkpW1vbnRoBg==", // {"tomorrow": {"month": 6, "day": 23, "year": 2021}, "today": {"day": 22, "year": 2020, "month": 6}}
+			Expected:     false,
+		},
+		{
+			Name:         "different order arrays",
+			FirstObject:  "kgEC", // [1, 2]
+			SecondObject: "kgIB", // [2, 1]
+			Expected:     false,
+		},
+	}
+
+	runTestsWithOptions(t, tests, false, false, true, false)
 }
 
 func TestCompareFlexibleTypes(t *testing.T) {
@@ -211,5 +387,119 @@ func TestCompareFlexibleTypes(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, false, true, true) // TODO: set ignoreOrder=false
+	runTestsWithOptions(t, tests, false, false, false, true)
+}
+
+func TestLongestCommonSubsequence(t *testing.T) {
+	type LCSTest struct {
+		Name      string
+		FirstSeq  []string
+		SecondSeq []string
+		Expected  []string
+	}
+
+	tests := []LCSTest{
+		{
+			Name:      "both empty",
+			FirstSeq:  []string{},
+			SecondSeq: []string{},
+			Expected:  []string{},
+		},
+		{
+			Name:      "first empty",
+			FirstSeq:  []string{},
+			SecondSeq: []string{"A"},
+			Expected:  []string{},
+		},
+		{
+			Name:      "second empty",
+			FirstSeq:  []string{"A"},
+			SecondSeq: []string{},
+			Expected:  []string{},
+		},
+		{
+			Name:      "disjoint",
+			FirstSeq:  []string{"A"},
+			SecondSeq: []string{"B", "Q"},
+			Expected:  []string{},
+		},
+		{
+			Name:      "one has prefix",
+			FirstSeq:  []string{"A", "B"},
+			SecondSeq: []string{"B"},
+			Expected:  []string{"B"},
+		},
+		{
+			Name:      "both have prefix",
+			FirstSeq:  []string{"A", "C", "D"},
+			SecondSeq: []string{"0", "B", "C", "D"},
+			Expected:  []string{"C", "D"},
+		},
+		{
+			Name:      "one has suffix",
+			FirstSeq:  []string{"A", "B", "C"},
+			SecondSeq: []string{"A"},
+			Expected:  []string{"A"},
+		},
+		{
+			Name:      "both have suffix",
+			FirstSeq:  []string{"A", "1", "2", "3"},
+			SecondSeq: []string{"A", "B", "C"},
+			Expected:  []string{"A"},
+		},
+		{
+			Name:      "one has infix",
+			FirstSeq:  []string{"A", "X", "Z", "B", "C"},
+			SecondSeq: []string{"A", "B", "C"},
+			Expected:  []string{"A", "B", "C"},
+		},
+		{
+			Name:      "both have infix",
+			FirstSeq:  []string{"A", "1", "B", "2", "C"},
+			SecondSeq: []string{"A", "a", "B", "b", "C"},
+			Expected:  []string{"A", "B", "C"},
+		},
+		{
+			Name:      "subset",
+			FirstSeq:  []string{"A", "B", "C", "D"},
+			SecondSeq: []string{"C"},
+			Expected:  []string{"C"},
+		},
+		{
+			Name:      "wikipedia example",
+			FirstSeq:  []string{"A", "G", "C", "A", "T"},
+			SecondSeq: []string{"G", "A", "C"},
+			Expected:  []string{"G", "A"},
+		},
+	}
+
+	slicesEqual := func(s1 []string, s2 []string) bool {
+		if len(s1) != len(s2) {
+			return false
+		}
+
+		for i := range s1 {
+			if s1[i] != s2[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	for _, test := range tests {
+		runTest := func(t *testing.T) {
+			result := longestCommonSubsequence(test.FirstSeq, test.SecondSeq)
+			resultFlipped := longestCommonSubsequence(test.SecondSeq, test.FirstSeq)
+
+			if !slicesEqual(result, resultFlipped) {
+				t.Fatalf("Result differs based on order of arguments: got %v and %v\n", result, resultFlipped)
+			}
+
+			if !slicesEqual(result, test.Expected) {
+				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)
+			}
+		}
+		t.Run(test.Name, runTest)
+	}
 }

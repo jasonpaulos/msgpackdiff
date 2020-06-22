@@ -45,15 +45,18 @@ func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
 	case msgp.MapType:
 		var size int
 		size, _, bytes, err = msgp.ReadMapHeaderBytes(bytes)
-		valueMap := make(map[string]MsgpObject, size)
-		for size > 0 {
-			size--
+		valueMap := MsgpMap{
+			Order:  make([]string, size),
+			Values: make(map[string]MsgpObject, size),
+		}
+		for i := 0; i < size; i++ {
 			var key string
 			key, bytes, err = msgp.ReadStringBytes(bytes)
 			if err != nil {
 				break
 			}
-			valueMap[key], bytes, err = Parse(bytes)
+			valueMap.Order[i] = key
+			valueMap.Values[key], bytes, err = Parse(bytes)
 			if err != nil {
 				break
 			}

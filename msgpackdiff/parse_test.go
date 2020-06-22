@@ -68,7 +68,10 @@ func TestParse(t *testing.T) {
 			Input: "gA==",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{},
+				MsgpMap{
+					[]string{},
+					map[string]MsgpObject{},
+				},
 			},
 		},
 		{
@@ -183,8 +186,11 @@ func TestParse(t *testing.T) {
 			Input: "gaFhAQ==",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{
-					"a": {msgp.IntType, int64(1)},
+				MsgpMap{
+					[]string{"a"},
+					map[string]MsgpObject{
+						"a": {msgp.IntType, int64(1)},
+					},
 				},
 			},
 		},
@@ -193,9 +199,12 @@ func TestParse(t *testing.T) {
 			Input: "gqpsb25nZXJfa2V5AqhudWxsX2tlecA=",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{
-					"longer_key": {msgp.IntType, int64(2)},
-					"null_key":   {msgp.NilType, nil},
+				MsgpMap{
+					[]string{"longer_key", "null_key"},
+					map[string]MsgpObject{
+						"longer_key": {msgp.IntType, int64(2)},
+						"null_key":   {msgp.NilType, nil},
+					},
 				},
 			},
 		},
@@ -204,8 +213,11 @@ func TestParse(t *testing.T) {
 			Input: "gaJwactACSH7VEQtGA==",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{
-					"pi": {msgp.Float64Type, float64(3.141592653589793)},
+				MsgpMap{
+					[]string{"pi"},
+					map[string]MsgpObject{
+						"pi": {msgp.Float64Type, float64(3.141592653589793)},
+					},
 				},
 			},
 		},
@@ -214,8 +226,11 @@ func TestParse(t *testing.T) {
 			Input: "gawzMiBiaXQgZmxvYXTKP8AAAA==",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{
-					"32 bit float": {msgp.Float32Type, float32(1.5)},
+				MsgpMap{
+					[]string{"32 bit float"},
+					map[string]MsgpObject{
+						"32 bit float": {msgp.Float32Type, float32(1.5)},
+					},
 				},
 			},
 		},
@@ -224,9 +239,12 @@ func TestParse(t *testing.T) {
 			Input: "gq5maXJzdF9udWxsX2tlecCvc2Vjb25kX251bGxfa2V5wA==",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{
-					"first_null_key":  {msgp.NilType, nil},
-					"second_null_key": {msgp.NilType, nil},
+				MsgpMap{
+					[]string{"first_null_key", "second_null_key"},
+					map[string]MsgpObject{
+						"first_null_key":  {msgp.NilType, nil},
+						"second_null_key": {msgp.NilType, nil},
+					},
 				},
 			},
 		},
@@ -235,19 +253,28 @@ func TestParse(t *testing.T) {
 			Input: "gaN0eG6Ko2FtdM4ATEtAo2ZlZc0D6KJmds4AW42Ao2dlbqxtYWlubmV0LXYxLjCiZ2jZLHdHSEUyUHdkdmQ3UzEyQkw1RmFPUDIwRUdZZXNONzNrdGlDMXF6a2tpdDg9omx2zgBbkWikbm90ZbBTR1ZzYkc4Z1YyOXliR1E9o3Jjdtk6R0Q2NFlJWTNUV0dETUNOUFA1NTNEWlBQUjZMRFVTRlFPSUpWRkRQUFhXRUczRlZPSkNDREJCSFU1QaNzbmTZOkVXNjRHQzZGMjRNN05EU0M1UjNFUzRZVVZFM1pYWE5NQVJKSERDQ0NMSUhaVTZUQkVPQzdYUlNCRzSkdHlwZaNwYXk=",
 			Expected: MsgpObject{
 				msgp.MapType,
-				map[string]MsgpObject{
-					"txn": {msgp.MapType, map[string]MsgpObject{
-						"amt":  {msgp.UintType, uint64(5000000)},
-						"fee":  {msgp.UintType, uint64(1000)},
-						"fv":   {msgp.UintType, uint64(6000000)},
-						"gen":  {msgp.StrType, "mainnet-v1.0"},
-						"gh":   {msgp.StrType, "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8="},
-						"lv":   {msgp.UintType, uint64(6001000)},
-						"note": {msgp.StrType, "SGVsbG8gV29ybGQ="},
-						"rcv":  {msgp.StrType, "GD64YIY3TWGDMCNPP553DZPPR6LDUSFQOIJVFDPPXWEG3FVOJCCDBBHU5A"},
-						"snd":  {msgp.StrType, "EW64GC6F24M7NDSC5R3ES4YUVE3ZXXNMARJHDCCCLIHZU6TBEOC7XRSBG4"},
-						"type": {msgp.StrType, "pay"},
-					}},
+				MsgpMap{
+					[]string{"txn"},
+					map[string]MsgpObject{
+						"txn": {
+							msgp.MapType,
+							MsgpMap{
+								[]string{"amt", "fee", "fv", "gen", "gh", "lv", "note", "rcv", "snd", "type"},
+								map[string]MsgpObject{
+									"amt":  {msgp.UintType, uint64(5000000)},
+									"fee":  {msgp.UintType, uint64(1000)},
+									"fv":   {msgp.UintType, uint64(6000000)},
+									"gen":  {msgp.StrType, "mainnet-v1.0"},
+									"gh":   {msgp.StrType, "wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8="},
+									"lv":   {msgp.UintType, uint64(6001000)},
+									"note": {msgp.StrType, "SGVsbG8gV29ybGQ="},
+									"rcv":  {msgp.StrType, "GD64YIY3TWGDMCNPP553DZPPR6LDUSFQOIJVFDPPXWEG3FVOJCCDBBHU5A"},
+									"snd":  {msgp.StrType, "EW64GC6F24M7NDSC5R3ES4YUVE3ZXXNMARJHDCCCLIHZU6TBEOC7XRSBG4"},
+									"type": {msgp.StrType, "pay"},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

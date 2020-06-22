@@ -7,6 +7,12 @@ import (
 	"github.com/algorand/msgp/msgp"
 )
 
+// MsgpMap represents an ordered map of strings to MsgpObjects
+type MsgpMap struct {
+	Order  []string
+	Values map[string]MsgpObject
+}
+
 // MsgpObject contains a parsed MessagePack object and its type.
 type MsgpObject struct {
 	Type  msgp.Type
@@ -30,9 +36,9 @@ func (obj MsgpObject) IsEmpty() (empty bool) {
 	case msgp.BinType:
 		empty = len(obj.Value.([]byte)) == 0
 	case msgp.MapType:
-		valueMap := obj.Value.(map[string]MsgpObject)
+		valueMap := obj.Value.(MsgpMap)
 		empty = true
-		for _, value := range valueMap {
+		for _, value := range valueMap.Values {
 			if !value.IsEmpty() {
 				empty = false
 				break

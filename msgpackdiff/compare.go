@@ -2,7 +2,6 @@ package msgpackdiff
 
 import (
 	"bytes"
-	"errors"
 	"time"
 
 	"github.com/algorand/msgp/msgp"
@@ -11,22 +10,21 @@ import (
 // Compare checks two MessagePack objects for equality. The first return value will be true if and
 // only if the objects a and b are considered equivalent. If the second return value is a non-nil
 // error, then the comparison could not be completed and the first return value should be ignored.
-func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder, flexibleTypes bool) (bool, error) {
-	objA, _, err := Parse(a)
+func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder, flexibleTypes bool) (result bool, err error) {
+	var objA MsgpObject
+	objA, _, err = Parse(a)
 	if err != nil {
-		return false, err
+		return
 	}
 
-	objB, _, err := Parse(b)
+	var objB MsgpObject
+	objB, _, err = Parse(b)
 	if err != nil {
-		return false, err
+		return
 	}
 
-	if !ignoreOrder {
-		return false, errors.New("Strict order has not been implemented yet")
-	}
-
-	return compareObjects(objA, objB, stopOnFirstDifference, ignoreEmpty, flexibleTypes), nil
+	result = compareObjects(objA, objB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
+	return
 }
 
 func compareNumbers(a MsgpObject, b MsgpObject) (equal bool) {
@@ -103,7 +101,7 @@ func compareNumbers(a MsgpObject, b MsgpObject) (equal bool) {
 	return
 }
 
-func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmpty, flexibleTypes bool) (equal bool) {
+func compareObjects(a MsgpObject, b MsgpObject, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes bool) (equal bool) {
 	if a.Type != b.Type {
 		if flexibleTypes && compareNumbers(a, b) {
 			equal = true
@@ -124,23 +122,23 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 		bytesB := b.Value.([]byte)
 		equal = bytes.Equal(bytesA, bytesB)
 	case msgp.MapType:
-		mapA := a.Value.(map[string]MsgpObject)
-		mapB := b.Value.(map[string]MsgpObject)
-		if stopOnFirstDifference && !ignoreEmpty && len(mapA) != len(mapB) {
+		mapA := a.Value.(MsgpMap)
+		mapB := b.Value.(MsgpMap)
+		if stopOnFirstDifference && !ignoreEmpty && len(mapA.Values) != len(mapB.Values) {
 			equal = false
-		} else {
+		} else if ignoreOrder {
 			allKeys := make(map[string]bool)
-			for key := range mapA {
+			for key := range mapA.Values {
 				allKeys[key] = true
 			}
-			for key := range mapB {
+			for key := range mapB.Values {
 				allKeys[key] = true
 			}
 
 			equal = true
 			for key := range allKeys {
-				valueA, okA := mapA[key]
-				valueB, okB := mapB[key]
+				valueA, okA := mapA.Values[key]
+				valueB, okB := mapB.Values[key]
 
 				if !okA || !okB {
 					if ignoreEmpty && ((okA && valueA.IsEmpty()) || (okB && valueB.IsEmpty())) {
@@ -154,8 +152,52 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 					}
 				}
 
-				valuesEqual := compareObjects(valueA, valueB, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
+				valuesEqual := compareObjects(valueA, valueB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
 				if !valuesEqual {
+					equal = false
+					if stopOnFirstDifference {
+						break
+					}
+				}
+			}
+		} else {
+			lcs := longestCommonSubsequence(mapA.Order, mapB.Order)
+
+			equal = true
+			lcsKeys := make(map[string]bool, len(lcs))
+			for _, key := range lcs {
+				lcsKeys[key] = true
+				valueA := mapA.Values[key]
+				valueB := mapB.Values[key]
+
+				valuesEqual := compareObjects(valueA, valueB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
+				if !valuesEqual {
+					equal = false
+					if stopOnFirstDifference {
+						break
+					}
+				}
+			}
+
+			for _, key := range mapA.Order {
+				if !lcsKeys[key] {
+					if ignoreEmpty && mapA.Values[key].IsEmpty() {
+						continue
+					}
+
+					equal = false
+					if stopOnFirstDifference {
+						break
+					}
+				}
+			}
+
+			for _, key := range mapB.Order {
+				if !lcsKeys[key] {
+					if ignoreEmpty && mapB.Values[key].IsEmpty() {
+						continue
+					}
+
 					equal = false
 					if stopOnFirstDifference {
 						break
@@ -180,7 +222,7 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 			}
 
 			equal = true
-			for i := 0; i <= len(*largeArray); i++ {
+			for i := 0; i < len(*largeArray); i++ {
 				if i >= len(*smallArray) {
 					// can assume stopOnFirstDifference=false here
 					equal = false
@@ -190,7 +232,7 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 
 				itemA := arrayA[i]
 				itemB := arrayB[i]
-				itemsEqual := compareObjects(itemA, itemB, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
+				itemsEqual := compareObjects(itemA, itemB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
 				if !itemsEqual {
 					equal = false
 					if stopOnFirstDifference {
@@ -235,4 +277,36 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 		equal = timeA.Equal(timeB)
 	}
 	return
+}
+
+// longestCommonSubsequence returns a solution to the longest subsequence problem for a and b.
+// Based on https://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Solution_for_two_sequences
+func longestCommonSubsequence(a []string, b []string) []string {
+	// make b the smaller slice
+	if len(a) < len(b) {
+		a, b = b, a
+	}
+
+	prevRow := make([][]string, len(b)+1)
+	currentRow := make([][]string, len(b)+1)
+
+	for _, itemA := range a {
+		prevRow, currentRow = currentRow, prevRow
+
+		for indexB, itemB := range b {
+			if itemA == itemB {
+				currentRow[indexB+1] = append(prevRow[indexB], itemB)
+			} else {
+				above := prevRow[indexB+1]
+				left := currentRow[indexB]
+				if len(above) > len(left) {
+					currentRow[indexB+1] = above
+				} else {
+					currentRow[indexB+1] = left
+				}
+			}
+		}
+	}
+
+	return currentRow[len(b)]
 }
