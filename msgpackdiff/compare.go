@@ -37,64 +37,64 @@ func compareNumbers(a MsgpObject, b MsgpObject) (equal bool) {
 
 	switch {
 	case a.Type == msgp.Float64Type && b.Type == msgp.Float32Type:
-		floatA := a.Object.(float64)
-		floatB := b.Object.(float32)
+		floatA := a.Value.(float64)
+		floatB := b.Value.(float32)
 		equal = floatA == float64(floatB)
 	case a.Type == msgp.Float64Type && b.Type == msgp.IntType:
-		floatA := a.Object.(float64)
-		intB := b.Object.(int64)
+		floatA := a.Value.(float64)
+		intB := b.Value.(int64)
 		equal = floatA == float64(intB)
 	case a.Type == msgp.Float64Type && b.Type == msgp.UintType:
-		floatA := a.Object.(float64)
-		intB := b.Object.(uint64)
+		floatA := a.Value.(float64)
+		intB := b.Value.(uint64)
 		equal = floatA == float64(intB)
 	case a.Type == msgp.Float64Type && b.Type == msgp.Complex64Type:
-		floatA := a.Object.(float64)
-		complexB := b.Object.(complex64)
+		floatA := a.Value.(float64)
+		complexB := b.Value.(complex64)
 		equal = complex(floatA, 0) == complex128(complexB)
 	case a.Type == msgp.Float64Type && b.Type == msgp.Complex128Type:
-		floatA := a.Object.(float64)
-		complexB := b.Object.(complex128)
+		floatA := a.Value.(float64)
+		complexB := b.Value.(complex128)
 		equal = complex(floatA, 0) == complexB
 	case a.Type == msgp.Float32Type && b.Type == msgp.IntType:
-		floatA := a.Object.(float32)
-		intB := b.Object.(int64)
+		floatA := a.Value.(float32)
+		intB := b.Value.(int64)
 		equal = floatA == float32(intB)
 	case a.Type == msgp.Float32Type && b.Type == msgp.UintType:
-		floatA := a.Object.(float32)
-		intB := b.Object.(uint64)
+		floatA := a.Value.(float32)
+		intB := b.Value.(uint64)
 		equal = floatA == float32(intB)
 	case a.Type == msgp.Float32Type && b.Type == msgp.Complex64Type:
-		floatA := a.Object.(float32)
-		complexB := b.Object.(complex64)
+		floatA := a.Value.(float32)
+		complexB := b.Value.(complex64)
 		equal = complex(floatA, 0) == complexB
 	case a.Type == msgp.Float32Type && b.Type == msgp.Complex128Type:
-		floatA := a.Object.(float32)
-		complexB := b.Object.(complex128)
+		floatA := a.Value.(float32)
+		complexB := b.Value.(complex128)
 		equal = complex(float64(floatA), 0) == complexB
 	case a.Type == msgp.IntType && b.Type == msgp.UintType:
-		intA := a.Object.(int64)
-		intB := b.Object.(uint64)
+		intA := a.Value.(int64)
+		intB := b.Value.(uint64)
 		equal = intA >= 0 && uint64(intA) == intB
 	case a.Type == msgp.IntType && b.Type == msgp.Complex64Type:
-		intA := a.Object.(int64)
-		complexB := b.Object.(complex64)
+		intA := a.Value.(int64)
+		complexB := b.Value.(complex64)
 		equal = complex(float32(intA), 0) == complexB
 	case a.Type == msgp.IntType && b.Type == msgp.Complex128Type:
-		intA := a.Object.(int64)
-		complexB := b.Object.(complex128)
+		intA := a.Value.(int64)
+		complexB := b.Value.(complex128)
 		equal = complex(float64(intA), 0) == complexB
 	case a.Type == msgp.UintType && b.Type == msgp.Complex64Type:
-		intA := a.Object.(uint64)
-		complexB := b.Object.(complex64)
+		intA := a.Value.(uint64)
+		complexB := b.Value.(complex64)
 		equal = complex(float32(intA), 0) == complexB
 	case a.Type == msgp.UintType && b.Type == msgp.Complex128Type:
-		intA := a.Object.(uint64)
-		complexB := b.Object.(complex128)
+		intA := a.Value.(uint64)
+		complexB := b.Value.(complex128)
 		equal = complex(float64(intA), 0) == complexB
 	case a.Type == msgp.Complex64Type && b.Type == msgp.Complex128Type:
-		complexA := a.Object.(complex64)
-		complexB := b.Object.(complex128)
+		complexA := a.Value.(complex64)
+		complexB := b.Value.(complex128)
 		equal = complex128(complexA) == complexB
 	default:
 		// the arguments are not numbers so they can't be equal
@@ -116,16 +116,16 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 
 	switch a.Type {
 	case msgp.StrType:
-		strA := a.Object.(string)
-		strB := b.Object.(string)
+		strA := a.Value.(string)
+		strB := b.Value.(string)
 		equal = strA == strB
 	case msgp.BinType:
-		bytesA := a.Object.([]byte)
-		bytesB := b.Object.([]byte)
+		bytesA := a.Value.([]byte)
+		bytesB := b.Value.([]byte)
 		equal = bytes.Equal(bytesA, bytesB)
 	case msgp.MapType:
-		mapA := a.Object.(map[string]MsgpObject)
-		mapB := b.Object.(map[string]MsgpObject)
+		mapA := a.Value.(map[string]MsgpObject)
+		mapB := b.Value.(map[string]MsgpObject)
 		if stopOnFirstDifference && !ignoreEmpty && len(mapA) != len(mapB) {
 			equal = false
 		} else {
@@ -164,8 +164,8 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 			}
 		}
 	case msgp.ArrayType:
-		arrayA := a.Object.([]MsgpObject)
-		arrayB := b.Object.([]MsgpObject)
+		arrayA := a.Value.([]MsgpObject)
+		arrayB := b.Value.([]MsgpObject)
 		if stopOnFirstDifference && len(arrayA) != len(arrayB) {
 			equal = false
 		} else {
@@ -200,38 +200,38 @@ func compareObjects(a MsgpObject, b MsgpObject, stopOnFirstDifference, ignoreEmp
 			}
 		}
 	case msgp.Float32Type:
-		floatA := a.Object.(float32)
-		floatB := b.Object.(float32)
+		floatA := a.Value.(float32)
+		floatB := b.Value.(float32)
 		equal = floatA == floatB
 	case msgp.Float64Type:
-		floatA := a.Object.(float64)
-		floatB := b.Object.(float64)
+		floatA := a.Value.(float64)
+		floatB := b.Value.(float64)
 		equal = floatA == floatB
 	case msgp.BoolType:
-		boolA := a.Object.(bool)
-		boolB := b.Object.(bool)
+		boolA := a.Value.(bool)
+		boolB := b.Value.(bool)
 		equal = boolA == boolB
 	case msgp.IntType:
-		intA := a.Object.(int64)
-		intB := b.Object.(int64)
+		intA := a.Value.(int64)
+		intB := b.Value.(int64)
 		equal = intA == intB
 	case msgp.UintType:
-		intA := a.Object.(uint64)
-		intB := b.Object.(uint64)
+		intA := a.Value.(uint64)
+		intB := b.Value.(uint64)
 		equal = intA == intB
 	case msgp.NilType:
 		equal = true
 	case msgp.Complex64Type:
-		complexA := a.Object.(complex64)
-		complexB := b.Object.(complex64)
+		complexA := a.Value.(complex64)
+		complexB := b.Value.(complex64)
 		equal = complexA == complexB
 	case msgp.Complex128Type:
-		complexA := a.Object.(complex128)
-		complexB := b.Object.(complex128)
+		complexA := a.Value.(complex128)
+		complexB := b.Value.(complex128)
 		equal = complexA == complexB
 	case msgp.TimeType:
-		timeA := a.Object.(time.Time)
-		timeB := b.Object.(time.Time)
+		timeA := a.Value.(time.Time)
+		timeB := b.Value.(time.Time)
 		equal = timeA.Equal(timeB)
 	}
 	return

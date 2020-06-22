@@ -39,13 +39,13 @@ func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
 	parsed.Type = msgp.NextType(bytes)
 	switch parsed.Type {
 	case msgp.StrType:
-		parsed.Object, bytes, err = msgp.ReadStringBytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadStringBytes(bytes)
 	case msgp.BinType:
-		parsed.Object, bytes, err = msgp.ReadBytesBytes(bytes, nil)
+		parsed.Value, bytes, err = msgp.ReadBytesBytes(bytes, nil)
 	case msgp.MapType:
 		var size int
 		size, _, bytes, err = msgp.ReadMapHeaderBytes(bytes)
-		objectMap := make(map[string]MsgpObject, size)
+		valueMap := make(map[string]MsgpObject, size)
 		for size > 0 {
 			size--
 			var key string
@@ -53,42 +53,42 @@ func Parse(bytes []byte) (parsed MsgpObject, remaining []byte, err error) {
 			if err != nil {
 				break
 			}
-			objectMap[key], bytes, err = Parse(bytes)
+			valueMap[key], bytes, err = Parse(bytes)
 			if err != nil {
 				break
 			}
 		}
-		parsed.Object = objectMap
+		parsed.Value = valueMap
 	case msgp.ArrayType:
 		var size int
 		size, _, bytes, err = msgp.ReadArrayHeaderBytes(bytes)
-		objectArray := make([]MsgpObject, size)
+		valueArray := make([]MsgpObject, size)
 		for i := 0; i < size; i++ {
-			objectArray[i], bytes, err = Parse(bytes)
+			valueArray[i], bytes, err = Parse(bytes)
 			if err != nil {
 				break
 			}
 		}
-		parsed.Object = objectArray
+		parsed.Value = valueArray
 	case msgp.Float32Type:
-		parsed.Object, bytes, err = msgp.ReadFloat32Bytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadFloat32Bytes(bytes)
 	case msgp.Float64Type:
-		parsed.Object, bytes, err = msgp.ReadFloat64Bytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadFloat64Bytes(bytes)
 	case msgp.BoolType:
-		parsed.Object, bytes, err = msgp.ReadBoolBytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadBoolBytes(bytes)
 	case msgp.IntType:
-		parsed.Object, bytes, err = msgp.ReadInt64Bytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadInt64Bytes(bytes)
 	case msgp.UintType:
-		parsed.Object, bytes, err = msgp.ReadUint64Bytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadUint64Bytes(bytes)
 	case msgp.NilType:
-		parsed.Object = nil
+		parsed.Value = nil
 		bytes, err = msgp.ReadNilBytes(bytes)
 	case msgp.Complex64Type:
-		parsed.Object, bytes, err = msgp.ReadComplex64Bytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadComplex64Bytes(bytes)
 	case msgp.Complex128Type:
-		parsed.Object, bytes, err = msgp.ReadComplex128Bytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadComplex128Bytes(bytes)
 	case msgp.TimeType:
-		parsed.Object, bytes, err = msgp.ReadTimeBytes(bytes)
+		parsed.Value, bytes, err = msgp.ReadTimeBytes(bytes)
 	default:
 		err = errors.New("Invalid MessagePack type")
 	}

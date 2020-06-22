@@ -269,8 +269,8 @@ func TestParse(t *testing.T) {
 				t.Fatalf("Wrong type: got %v, expected %v\n", result.Type, test.Expected.Type)
 			}
 
-			if !reflect.DeepEqual(result.Object, test.Expected.Object) {
-				t.Fatalf("Objects unequal: got %+v, expected %+v\n", result.Object, test.Expected.Object)
+			if !reflect.DeepEqual(result.Value, test.Expected.Value) {
+				t.Fatalf("Objects unequal: got %+v, expected %+v\n", result.Value, test.Expected.Value)
 			}
 		}
 		t.Run(test.Name, runTest)
