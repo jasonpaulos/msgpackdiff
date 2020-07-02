@@ -2,6 +2,8 @@ package msgpackdiff
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/algorand/msgp/msgp"
@@ -10,7 +12,7 @@ import (
 // Compare checks two MessagePack objects for equality. The first return value will be true if and
 // only if the objects a and b are considered equivalent. If the second return value is a non-nil
 // error, then the comparison could not be completed and the first return value should be ignored.
-func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder, flexibleTypes bool) (result bool, err error) {
+func Compare(a []byte, b []byte, brief, ignoreEmpty, ignoreOrder, flexibleTypes bool) (result bool, err error) {
 	var objA MsgpObject
 	objA, _, err = Parse(a)
 	if err != nil {
@@ -23,7 +25,16 @@ func Compare(a []byte, b []byte, stopOnFirstDifference, ignoreEmpty, ignoreOrder
 		return
 	}
 
-	result = compareObjects(objA, objB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
+	reporter := Reporter{Brief: brief}
+
+	result = compareObjects(&reporter, objA, objB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
+
+	if !brief && !result {
+		fmt.Print(" ")
+		objA.PrintDiff(os.Stdout, 3, reporter.differences, 0)
+		fmt.Println()
+	}
+
 	return
 }
 
@@ -101,12 +112,14 @@ func compareNumbers(a MsgpObject, b MsgpObject) (equal bool) {
 	return
 }
 
-func compareObjects(a MsgpObject, b MsgpObject, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes bool) (equal bool) {
+func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder, brief, ignoreEmpty, flexibleTypes bool) (equal bool) {
 	if a.Type != b.Type {
 		if flexibleTypes && compareNumbers(a, b) {
 			equal = true
 			return
 		}
+
+		reporter.LogDifference(a, b)
 
 		equal = false
 		return
@@ -124,83 +137,152 @@ func compareObjects(a MsgpObject, b MsgpObject, ignoreOrder, stopOnFirstDifferen
 	case msgp.MapType:
 		mapA := a.Value.(MsgpMap)
 		mapB := b.Value.(MsgpMap)
-		if stopOnFirstDifference && !ignoreEmpty && len(mapA.Values) != len(mapB.Values) {
+		reporter.EnterMap(a)
+		defer reporter.LeaveMap()
+		if brief && !ignoreEmpty && len(mapA.Values) != len(mapB.Values) {
 			equal = false
 		} else if ignoreOrder {
-			allKeys := make(map[string]bool)
-			for key := range mapA.Values {
-				allKeys[key] = true
-			}
-			for key := range mapB.Values {
-				allKeys[key] = true
-			}
-
 			equal = true
-			for key := range allKeys {
-				valueA, okA := mapA.Values[key]
-				valueB, okB := mapB.Values[key]
 
-				if !okA || !okB {
-					if ignoreEmpty && ((okA && valueA.IsEmpty()) || (okB && valueB.IsEmpty())) {
-						// one map does not have an object for this field, but the other map has an
-						// empty object for the field, so they are treated as equal with ignoreEmpty
-						continue
-					}
-					equal = false
-					if stopOnFirstDifference {
-						break
-					}
-				}
-
-				valuesEqual := compareObjects(valueA, valueB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
-				if !valuesEqual {
-					equal = false
-					if stopOnFirstDifference {
-						break
-					}
-				}
-			}
-		} else {
-			lcs := longestCommonSubsequence(mapA.Order, mapB.Order)
-
-			equal = true
-			lcsKeys := make(map[string]bool, len(lcs))
-			for _, key := range lcs {
-				lcsKeys[key] = true
+			for index, key := range mapA.Order {
 				valueA := mapA.Values[key]
-				valueB := mapB.Values[key]
+				valueB, ok := mapB.Values[key]
 
-				valuesEqual := compareObjects(valueA, valueB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
-				if !valuesEqual {
-					equal = false
-					if stopOnFirstDifference {
-						break
-					}
-				}
-			}
+				reporter.SetKey(index, key)
 
-			for _, key := range mapA.Order {
-				if !lcsKeys[key] {
-					if ignoreEmpty && mapA.Values[key].IsEmpty() {
+				if !ok {
+					if ignoreEmpty && valueA.IsEmpty() {
 						continue
 					}
 
+					reporter.LogDeletion(valueA)
+
 					equal = false
-					if stopOnFirstDifference {
+					if brief {
+						break
+					}
+				}
+
+				valuesEqual := compareObjects(reporter, valueA, valueB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
+				if !valuesEqual {
+					equal = false
+					if brief {
 						break
 					}
 				}
 			}
 
 			for _, key := range mapB.Order {
-				if !lcsKeys[key] {
-					if ignoreEmpty && mapB.Values[key].IsEmpty() {
-						continue
+				_, ok := mapA.Values[key]
+				valueB := mapB.Values[key]
+
+				if ok {
+					continue
+				}
+
+				if ignoreEmpty && valueB.IsEmpty() {
+					continue
+				}
+
+				reporter.SetKey(len(mapA.Order), key)
+				reporter.LogAddition(valueB)
+
+				equal = false
+
+				if brief {
+					break
+				}
+			}
+		} else {
+			lcs := longestCommonSubsequence(mapA.Order, mapB.Order)
+			if brief && !ignoreEmpty && (len(lcs) != len(mapA.Order) || len(lcs) != len(mapB.Order)) {
+				equal = false
+			} else {
+				equal = true
+
+				indexA := 0
+				indexB := 0
+				for _, keyLCS := range lcs {
+					inLCS := false
+
+					for ; indexA < len(mapA.Order); indexA++ {
+						keyA := mapA.Order[indexA]
+
+						if keyA == keyLCS {
+							indexA++
+							inLCS = true
+							break
+						}
+
+						if !ignoreEmpty || !mapA.Values[keyA].IsEmpty() {
+							reporter.SetKey(indexA, keyA)
+							reporter.LogDeletion(mapA.Values[keyA])
+
+							equal = false
+						}
 					}
 
-					equal = false
-					if stopOnFirstDifference {
+					if brief && !equal {
 						break
+					}
+
+					for ; indexB < len(mapB.Order); indexB++ {
+						keyB := mapB.Order[indexB]
+
+						if keyB == keyLCS {
+							indexB++
+							break
+						}
+
+						if !ignoreEmpty || !mapB.Values[keyB].IsEmpty() {
+							reporter.SetKey(indexA, keyB)
+							reporter.LogAddition(mapB.Values[keyB])
+
+							equal = false
+						}
+					}
+
+					if brief && !equal {
+						break
+					}
+
+					if inLCS {
+						valueA := mapA.Values[keyLCS]
+						valueB := mapB.Values[keyLCS]
+
+						reporter.SetKey(indexA, keyLCS)
+
+						valuesEqual := compareObjects(reporter, valueA, valueB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
+						if !valuesEqual {
+							equal = false
+							if brief {
+								break
+							}
+						}
+					}
+				}
+
+				if !brief || equal {
+					for ; indexA < len(mapA.Order); indexA++ {
+						keyA := mapA.Order[indexA]
+
+						if !ignoreEmpty || !mapA.Values[keyA].IsEmpty() {
+							reporter.SetKey(indexA, keyA)
+							reporter.LogDeletion(mapA.Values[keyA])
+
+							equal = false
+						}
+					}
+
+					for ; indexB < len(mapB.Order); indexB++ {
+						keyB := mapB.Order[indexB]
+
+						if !ignoreEmpty || !mapB.Values[keyB].IsEmpty() {
+							reporter.SetKey(indexA, keyB)
+							reporter.LogDeletion(mapB.Values[keyB])
+
+							equal = false
+						}
 					}
 				}
 			}
@@ -208,7 +290,9 @@ func compareObjects(a MsgpObject, b MsgpObject, ignoreOrder, stopOnFirstDifferen
 	case msgp.ArrayType:
 		arrayA := a.Value.([]MsgpObject)
 		arrayB := b.Value.([]MsgpObject)
-		if stopOnFirstDifference && len(arrayA) != len(arrayB) {
+		reporter.EnterArray(a)
+		defer reporter.LeaveArray()
+		if brief && len(arrayA) != len(arrayB) {
 			equal = false
 		} else {
 			var largeArray *[]MsgpObject
@@ -223,19 +307,28 @@ func compareObjects(a MsgpObject, b MsgpObject, ignoreOrder, stopOnFirstDifferen
 
 			equal = true
 			for i := 0; i < len(*largeArray); i++ {
+				reporter.SetIndex(i)
+
 				if i >= len(*smallArray) {
-					// can assume stopOnFirstDifference=false here
+					// can assume brief=false here
 					equal = false
-					// TODO: add missing items from smallArray to report
+
+					// report missing items from smallArray
+					if smallArray == &arrayA {
+						reporter.LogAddition(arrayB[i])
+					} else {
+						reporter.LogDeletion(arrayA[i])
+					}
+
 					continue
 				}
 
 				itemA := arrayA[i]
 				itemB := arrayB[i]
-				itemsEqual := compareObjects(itemA, itemB, ignoreOrder, stopOnFirstDifference, ignoreEmpty, flexibleTypes)
+				itemsEqual := compareObjects(reporter, itemA, itemB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
 				if !itemsEqual {
 					equal = false
-					if stopOnFirstDifference {
+					if brief {
 						break
 					}
 				}
@@ -276,6 +369,11 @@ func compareObjects(a MsgpObject, b MsgpObject, ignoreOrder, stopOnFirstDifferen
 		timeB := b.Value.(time.Time)
 		equal = timeA.Equal(timeB)
 	}
+
+	if !equal && a.Type != msgp.MapType && a.Type != msgp.ArrayType {
+		reporter.LogDifference(a, b)
+	}
+
 	return
 }
 
