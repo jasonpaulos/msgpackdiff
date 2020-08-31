@@ -3,6 +3,7 @@ package msgpackdiff
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -227,8 +228,6 @@ func getSign(isDeletion bool) string {
 	return "+"
 }
 
-var stringEscaper *strings.Replacer = strings.NewReplacer("\t", "\\t", "\n", "\\n", "\\", "\\\\")
-
 func escapeString(str string) string {
-	return fmt.Sprintf("\"%s\"", stringEscaper.Replace(str))
+	return strconv.QuoteToASCII(str)
 }
