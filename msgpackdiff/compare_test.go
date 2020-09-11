@@ -31,11 +31,15 @@ func runTestsWithOptions(t *testing.T, tests []CompareTest, ignoreEmpty, ignoreO
 			}
 
 			stopEarlyResult, err := Compare(firstObject, secondObject, true, ignoreEmpty, ignoreOrder, flexibleTypes)
-			if result != stopEarlyResult {
+			if err != nil {
+				t.Fatalf("Unexpected stop early error: %v\n", err)
+			}
+
+			if result.Equal != stopEarlyResult.Equal {
 				t.Error("Different result with stopOnFirstDifference=true\n")
 			}
 
-			if result != test.Expected {
+			if result.Equal != test.Expected {
 				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)
 			}
 		}
@@ -169,6 +173,12 @@ func TestCompareDefault(t *testing.T) {
 			Name:         "different order arrays",
 			FirstObject:  "kgEC", // [1, 2]
 			SecondObject: "kgIB", // [2, 1]
+			Expected:     false,
+		},
+		{
+			Name:         "different size arrays",
+			FirstObject:  "kgEC", // [1, 2]
+			SecondObject: "kQI=", // [2]
 			Expected:     false,
 		},
 	}

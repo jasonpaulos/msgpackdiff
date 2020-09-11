@@ -41,7 +41,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	if !result {
+	result.PrintReport(os.Stdout)
+
+	if !result.Equal {
 		fmt.Println("Objects are not equal")
 		os.Exit(1)
 	}

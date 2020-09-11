@@ -2,38 +2,41 @@ package msgpackdiff
 
 import (
 	"bytes"
-	"fmt"
-	"os"
+	"io"
 	"time"
 
 	"github.com/algorand/msgp/msgp"
 )
 
+type CompareResult struct {
+	Equal    bool
+	Reporter Reporter
+	Objects  [2]MsgpObject
+}
+
+func (result CompareResult) PrintReport(w io.Writer) {
+	if !result.Reporter.Brief && !result.Equal {
+		result.Objects[0].PrintDiff(w, 3, result.Reporter.differences, 0, false)
+	}
+}
+
 // Compare checks two MessagePack objects for equality. The first return value will be true if and
 // only if the objects a and b are considered equivalent. If the second return value is a non-nil
 // error, then the comparison could not be completed and the first return value should be ignored.
-func Compare(a []byte, b []byte, brief, ignoreEmpty, ignoreOrder, flexibleTypes bool) (result bool, err error) {
-	var objA MsgpObject
-	objA, _, err = Parse(a)
+func Compare(a []byte, b []byte, brief, ignoreEmpty, ignoreOrder, flexibleTypes bool) (result CompareResult, err error) {
+	result.Reporter.Brief = brief
+
+	result.Objects[0], _, err = Parse(a)
 	if err != nil {
 		return
 	}
 
-	var objB MsgpObject
-	objB, _, err = Parse(b)
+	result.Objects[1], _, err = Parse(b)
 	if err != nil {
 		return
 	}
 
-	reporter := Reporter{Brief: brief}
-
-	result = compareObjects(&reporter, objA, objB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
-
-	if !brief && !result {
-		fmt.Print(" ")
-		objA.PrintDiff(os.Stdout, 3, reporter.differences, 0)
-		fmt.Println()
-	}
+	result.Equal = compareObjects(&result.Reporter, result.Objects[0], result.Objects[1], ignoreOrder, brief, ignoreEmpty, flexibleTypes)
 
 	return
 }
@@ -235,7 +238,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 						}
 
 						if !ignoreEmpty || !mapB.Values[keyB].IsEmpty() {
-							reporter.SetKey(indexA, keyB)
+							reporter.SetKey(indexA-1, keyB)
 							reporter.LogAddition(mapB.Values[keyB])
 
 							equal = false
@@ -250,7 +253,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 						valueA := mapA.Values[keyLCS]
 						valueB := mapB.Values[keyLCS]
 
-						reporter.SetKey(indexA, keyLCS)
+						reporter.SetKey(indexA-1, keyLCS)
 
 						valuesEqual := compareObjects(reporter, valueA, valueB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
 						if !valuesEqual {
