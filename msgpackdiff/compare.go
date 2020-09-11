@@ -265,6 +265,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 					}
 				}
 
+				// report differences for keys that occur after the last LCS key
 				if !brief || equal {
 					for ; indexA < len(mapA.Order); indexA++ {
 						keyA := mapA.Order[indexA]
@@ -282,7 +283,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 
 						if !ignoreEmpty || !mapB.Values[keyB].IsEmpty() {
 							reporter.SetKey(indexA, keyB)
-							reporter.LogDeletion(mapB.Values[keyB])
+							reporter.LogAddition(mapB.Values[keyB])
 
 							equal = false
 						}

@@ -150,7 +150,39 @@ func TestObjectDeletion(t *testing.T) {
 	}
 }
 
-func TestObjectAddition(t *testing.T) {
+func TestObjectAdditionBegin(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
+
+	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+%s+      "data": 1,%s
+       "level": 3,
+       "end": true,
+     }
+   }
+ }
+`, chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectAdditionMiddle(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
 
@@ -171,6 +203,38 @@ func TestObjectAddition(t *testing.T) {
        "level": 3,
 %s+      "data": 1,%s
        "end": true,
+     }
+   }
+ }
+`, chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectAdditionEnd(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
+
+	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+       "end": true,
+%s+      "data": 1,%s
      }
    }
  }
