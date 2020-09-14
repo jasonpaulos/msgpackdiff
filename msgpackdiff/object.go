@@ -135,17 +135,17 @@ func (mo MsgpObject) Print(w io.Writer, prefix string, indent int, inline bool) 
 	}
 }
 
-func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, indent int, inline bool) {
+func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, indent int, inline bool) {
 	indentStr := strings.Repeat(indentation, indent)
 	levelZero := false
 	embedded := false
 
 	for _, diff := range diffs {
-		if len(diff.path) == 0 {
-			sign := getSign(diff.isDeletion)
+		if len(diff.Path) == 0 {
+			sign := getSign(diff.Type)
 			endSign := getSignEnd()
 
-			diff.object.Print(w, sign, indent, false)
+			diff.Object.Print(w, sign, indent, false)
 			fmt.Fprint(w, endSign)
 			levelZero = true
 		} else {
@@ -173,14 +173,14 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 		lastContextIndex := 0
 		for start := 0; start < len(diffs); {
 			diff := diffs[start]
-			layer := diff.path[0]
+			layer := diff.Path[0]
 
-			if layer.currentIndex-context > lastContextIndex {
+			if layer.CurrentIndex-context > lastContextIndex {
 				fmt.Fprintf(w, " %s%s...\n", indentStr, indentation)
 			}
 
 			for i := context; i > 0; i-- {
-				index := layer.currentIndex - i
+				index := layer.CurrentIndex - i
 				if index >= lastContextIndex {
 					key := valueMap.Order[index]
 					value := valueMap.Values[key]
@@ -193,14 +193,19 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 
 			nextLayerIndex := math.MaxInt32
 
-			if len(diff.path) == 1 {
-				sign := getSign(diff.isDeletion)
+			if len(diff.Path) == 1 {
+				sign := getSign(diff.Type)
 				endSign := getSignEnd()
 
-				fmt.Fprintf(w, "%s%s%s%s: ", sign, indentStr, indentation, escapeString(layer.currentKey))
-				diff.object.Print(w, sign, indent+1, true)
+				fmt.Fprintf(w, "%s%s%s%s: ", sign, indentStr, indentation, escapeString(layer.CurrentKey))
+				diff.Object.Print(w, sign, indent+1, true)
 
-				if start < len(diffs) {
+				moreKeys := layer.CurrentIndex+1 < len(valueMap.Order)
+				if diff.Type == Addition {
+					moreKeys = layer.CurrentIndex < len(valueMap.Order) || start+1 < len(diffs)
+				}
+
+				if moreKeys {
 					fmt.Fprintf(w, ",%s\n", endSign)
 				} else {
 					fmt.Fprintf(w, "%s\n", endSign)
@@ -208,34 +213,34 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 
 				start++
 
-				if diff.isDeletion {
-					lastContextIndex = layer.currentIndex + 1
+				if diff.Type == Deletion {
+					lastContextIndex = layer.CurrentIndex + 1
 				}
 
 				if start < len(diffs) {
-					nextLayerIndex = diffs[start].path[0].currentIndex
+					nextLayerIndex = diffs[start].Path[0].CurrentIndex
 				}
 			} else {
 				end := start + 1
 				for j := start + 1; j < len(diffs); j++ {
-					otherLayer := diffs[j].path[0]
-					if layer.currentIndex == otherLayer.currentIndex && layer.currentKey == otherLayer.currentKey {
+					otherLayer := diffs[j].Path[0]
+					if layer.CurrentIndex == otherLayer.CurrentIndex && layer.CurrentKey == otherLayer.CurrentKey {
 						end = j + 1
 					}
 				}
 
-				subdiffs := make([]difference, end-start)
+				subdiffs := make([]Difference, end-start)
 				copy(subdiffs, diffs[start:end])
 				for i := 0; i < len(subdiffs); i++ {
-					subdiffs[i].path = subdiffs[i].path[1:]
+					subdiffs[i].Path = subdiffs[i].Path[1:]
 				}
 
-				fmt.Fprintf(w, " %s%s%s: ", indentStr, indentation, escapeString(layer.currentKey))
-				value, ok := valueMap.Values[layer.currentKey]
+				fmt.Fprintf(w, " %s%s%s: ", indentStr, indentation, escapeString(layer.CurrentKey))
+				value, ok := valueMap.Values[layer.CurrentKey]
 				if ok {
 					value.PrintDiff(w, context, subdiffs, indent+1, true)
 				} else {
-					diff.object.PrintDiff(w, context, subdiffs, indent+1, true)
+					diff.Object.PrintDiff(w, context, subdiffs, indent+1, true)
 				}
 
 				if end < len(diffs) {
@@ -246,15 +251,15 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 
 				start = end
 
-				lastContextIndex = layer.currentIndex + 1
+				lastContextIndex = layer.CurrentIndex + 1
 
 				if end < len(diffs) {
-					nextLayerIndex = diffs[end].path[0].currentIndex
+					nextLayerIndex = diffs[end].Path[0].CurrentIndex
 				}
 			}
 
 			for i := 0; i <= context; i++ {
-				index := layer.currentIndex + i
+				index := layer.CurrentIndex + i
 				if index >= nextLayerIndex {
 					break
 				}
@@ -263,7 +268,10 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 					value := valueMap.Values[key]
 					fmt.Fprintf(w, " %s%s%s: ", indentStr, indentation, escapeString(key))
 					value.Print(w, " ", indent+1, true)
-					fmt.Fprint(w, ",\n")
+					if index+1 < len(valueMap.Order) {
+						fmt.Fprint(w, ",")
+					}
+					fmt.Fprint(w, "\n")
 					lastContextIndex = index + 1
 				}
 			}
@@ -281,33 +289,38 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 		lastContextIndex := 0
 		for start := 0; start < len(diffs); {
 			diff := diffs[start]
-			layer := diff.path[0]
+			layer := diff.Path[0]
 
-			if layer.currentIndex-context > lastContextIndex {
+			if layer.CurrentIndex-context > lastContextIndex {
 				fmt.Fprintf(w, " %s%s...\n", indentStr, indentation)
 			}
 
 			for i := context; i > 0; i-- {
-				index := layer.currentIndex - i
+				index := layer.CurrentIndex - i
 				if index >= lastContextIndex {
 					value := valueArray[index]
 					fmt.Fprintf(w, " %s%s", indentStr, indentation)
 					value.Print(w, " ", indent+1, true)
 					fmt.Fprint(w, ",\n")
-					lastContextIndex = layer.currentIndex - i + 1
+					lastContextIndex = index + 1
 				}
 			}
 
 			nextLayerIndex := math.MaxInt32
 
-			if len(diff.path) == 1 {
-				sign := getSign(diff.isDeletion)
+			if len(diff.Path) == 1 {
+				sign := getSign(diff.Type)
 				endSign := getSignEnd()
 
 				fmt.Fprintf(w, "%s%s%s", sign, indentStr, indentation)
-				diff.object.Print(w, sign, indent+1, true)
+				diff.Object.Print(w, sign, indent+1, true)
 
-				if start < len(diffs) {
+				moreElements := layer.CurrentIndex+1 < len(valueArray)
+				if diff.Type == Addition {
+					moreElements = layer.CurrentIndex < len(valueArray) || start+1 < len(diffs)
+				}
+
+				if moreElements {
 					fmt.Fprintf(w, ",%s\n", endSign)
 				} else {
 					fmt.Fprintf(w, "%s\n", endSign)
@@ -315,30 +328,32 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 
 				start++
 
-				lastContextIndex = layer.currentIndex + 1
+				if diff.Type == Deletion {
+					lastContextIndex = layer.CurrentIndex + 1
+				}
 
 				if start < len(diffs) {
-					nextLayerIndex = diffs[start].path[0].currentIndex
+					nextLayerIndex = diffs[start].Path[0].CurrentIndex
 				}
 			} else {
 				end := start + 1
 				for j := start + 1; j < len(diffs); j++ {
-					if layer.object == diffs[j].path[0].object {
+					if layer.Object == diffs[j].Path[0].Object {
 						end = j + 1
 					}
 				}
 
-				subdiffs := make([]difference, end-start)
+				subdiffs := make([]Difference, end-start)
 				copy(subdiffs, diffs[start:end])
 				for i := 0; i < len(subdiffs); i++ {
-					subdiffs[i].path = subdiffs[i].path[1:]
+					subdiffs[i].Path = subdiffs[i].Path[1:]
 				}
 
 				fmt.Fprintf(w, " %s%s", indentStr, indentation)
-				if layer.currentIndex < len(valueArray) {
-					valueArray[layer.currentIndex].PrintDiff(w, context, subdiffs, indent+1, true)
+				if layer.CurrentIndex < len(valueArray) {
+					valueArray[layer.CurrentIndex].PrintDiff(w, context, subdiffs, indent+1, true)
 				} else {
-					diff.object.PrintDiff(w, context, subdiffs, indent+1, true)
+					diff.Object.PrintDiff(w, context, subdiffs, indent+1, true)
 				}
 
 				if end < len(diffs) {
@@ -349,24 +364,27 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 
 				start = end
 
-				lastContextIndex = layer.currentIndex + 1
+				lastContextIndex = layer.CurrentIndex + 1
 
 				if end < len(diffs) {
-					nextLayerIndex = diffs[end].path[0].currentIndex
+					nextLayerIndex = diffs[end].Path[0].CurrentIndex
 				}
 			}
 
-			for i := 1; i <= context; i++ {
-				index := layer.currentIndex + i
+			for i := 0; i <= context; i++ {
+				index := layer.CurrentIndex + i
 				if index >= nextLayerIndex {
 					break
 				}
-				if index < len(valueArray) {
+				if index >= lastContextIndex && index < len(valueArray) {
 					value := valueArray[index]
 					fmt.Fprintf(w, " %s%s", indentStr, indentation)
 					value.Print(w, " ", indent+1, true)
-					fmt.Fprint(w, ",\n")
-					lastContextIndex = layer.currentIndex + i + 1
+					if index+1 < len(valueArray) {
+						fmt.Fprint(w, ",")
+					}
+					fmt.Fprint(w, "\n")
+					lastContextIndex = index + 1
 				}
 			}
 		}
@@ -381,8 +399,8 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []difference, ind
 	}
 }
 
-func getSign(isDeletion bool) string {
-	if isDeletion {
+func getSign(diffType DifferenceType) string {
+	if diffType == Deletion {
 		return chalk.Red.String() + "-"
 	}
 	return chalk.Green.String() + "+"

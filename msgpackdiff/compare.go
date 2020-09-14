@@ -16,7 +16,7 @@ type CompareResult struct {
 
 func (result CompareResult) PrintReport(w io.Writer) {
 	if !result.Reporter.Brief && !result.Equal {
-		result.Objects[0].PrintDiff(w, 3, result.Reporter.differences, 0, false)
+		result.Objects[0].PrintDiff(w, 3, result.Reporter.Differences, 0, false)
 	}
 }
 
@@ -122,7 +122,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 			return
 		}
 
-		reporter.LogDifference(a, b)
+		reporter.LogChange(a, b)
 
 		equal = false
 		return
@@ -375,7 +375,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 	}
 
 	if !equal && a.Type != msgp.MapType && a.Type != msgp.ArrayType {
-		reporter.LogDifference(a, b)
+		reporter.LogChange(a, b)
 	}
 
 	return
