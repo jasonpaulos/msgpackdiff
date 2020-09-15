@@ -3,6 +3,8 @@ package msgpackdiff
 import (
 	"encoding/base64"
 	"testing"
+
+	"github.com/algorand/msgp/msgp"
 )
 
 type CompareTest struct {
@@ -40,7 +42,7 @@ func runTestsWithOptions(t *testing.T, tests []CompareTest, ignoreEmpty, ignoreO
 			}
 
 			if result.Equal != test.Expected {
-				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)
+				t.Fatalf("Wrong result: got %v, expected %v\n", result.Equal, test.Expected)
 			}
 		}
 		t.Run(test.Name, runTest)
@@ -405,7 +407,7 @@ func TestCompareFlexibleTypes(t *testing.T) {
 	runTestsWithOptions(t, tests, false, false, true)
 }
 
-func TestLongestCommonSubsequence(t *testing.T) {
+func TestLCSStrings(t *testing.T) {
 	type LCSTest struct {
 		Name      string
 		FirstSeq  []string
@@ -504,12 +506,356 @@ func TestLongestCommonSubsequence(t *testing.T) {
 
 	for _, test := range tests {
 		runTest := func(t *testing.T) {
-			result := longestCommonSubsequence(test.FirstSeq, test.SecondSeq)
-			resultFlipped := longestCommonSubsequence(test.SecondSeq, test.FirstSeq)
+			result := lcsStrings(test.FirstSeq, test.SecondSeq)
+			resultFlipped := lcsStrings(test.SecondSeq, test.FirstSeq)
 
 			if !slicesEqual(result, resultFlipped) {
 				t.Fatalf("Result differs based on order of arguments: got %v and %v\n", result, resultFlipped)
 			}
+
+			if !slicesEqual(result, test.Expected) {
+				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)
+			}
+		}
+		t.Run(test.Name, runTest)
+	}
+}
+
+func TestLCSObjects(t *testing.T) {
+	type LCSTest struct {
+		Name      string
+		FirstSeq  []MsgpObject
+		SecondSeq []MsgpObject
+		Expected  [][2]int
+	}
+
+	tests := []LCSTest{
+		{
+			Name:      "both empty",
+			FirstSeq:  []MsgpObject{},
+			SecondSeq: []MsgpObject{},
+			Expected:  [][2]int{},
+		},
+		{
+			Name:     "first empty",
+			FirstSeq: []MsgpObject{},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				},
+			},
+			Expected: [][2]int{},
+		},
+		{
+			Name: "second empty",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				},
+			},
+			SecondSeq: []MsgpObject{},
+			Expected:  [][2]int{},
+		},
+		{
+			Name: "disjoint",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "Q",
+				},
+			},
+			Expected: [][2]int{},
+		},
+		{
+			Name: "one has prefix",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "B",
+				},
+			},
+			Expected: [][2]int{{1, 0}},
+		},
+		{
+			Name: "both have prefix",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				}, {
+					Type:  msgp.StrType,
+					Value: "D",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "0",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				}, {
+					Type:  msgp.StrType,
+					Value: "D",
+				},
+			},
+			Expected: [][2]int{{1, 2}, {2, 3}},
+		},
+		{
+			Name: "one has suffix",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				},
+			},
+			Expected: [][2]int{{0, 0}},
+		},
+		{
+			Name: "both have suffix",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "1",
+				}, {
+					Type:  msgp.StrType,
+					Value: "2",
+				}, {
+					Type:  msgp.StrType,
+					Value: "3",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			Expected: [][2]int{{0, 0}},
+		},
+		{
+			Name: "one has infix",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "X",
+				}, {
+					Type:  msgp.StrType,
+					Value: "Z",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			Expected: [][2]int{{0, 0}, {3, 1}, {4, 2}},
+		},
+		{
+			Name: "both have infix",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "1",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "2",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "a",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "b",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			Expected: [][2]int{{0, 0}, {2, 2}, {4, 4}},
+		},
+		{
+			Name: "subset",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "B",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				}, {
+					Type:  msgp.StrType,
+					Value: "D",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			Expected: [][2]int{{2, 0}},
+		},
+		{
+			Name: "wikipedia example",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "G",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				}, {
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "T",
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.StrType,
+					Value: "G",
+				}, {
+					Type:  msgp.StrType,
+					Value: "A",
+				}, {
+					Type:  msgp.StrType,
+					Value: "C",
+				},
+			},
+			Expected: [][2]int{{1, 0}, {3, 1}},
+		},
+		{
+			Name: "numbers",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.IntType,
+					Value: int64(1),
+				}, {
+					Type:  msgp.IntType,
+					Value: int64(2),
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.IntType,
+					Value: int64(1),
+				}, {
+					Type:  msgp.IntType,
+					Value: int64(2),
+				},
+			},
+			Expected: [][2]int{{0, 0}, {1, 1}},
+		},
+	}
+
+	slicesEqual := func(s1 [][2]int, s2 [][2]int) bool {
+		if len(s1) != len(s2) {
+			return false
+		}
+
+		for i := range s1 {
+			pair1 := s1[i]
+			pair2 := s2[i]
+			if pair1[0] != pair2[0] || pair1[1] != pair2[1] {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	for _, test := range tests {
+		runTest := func(t *testing.T) {
+			result := lcsObjects(test.FirstSeq, test.SecondSeq)
 
 			if !slicesEqual(result, test.Expected) {
 				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)

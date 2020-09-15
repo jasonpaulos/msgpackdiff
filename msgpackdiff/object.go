@@ -268,7 +268,7 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 					value := valueMap.Values[key]
 					fmt.Fprintf(w, " %s%s%s: ", indentStr, indentation, escapeString(key))
 					value.Print(w, " ", indent+1, true)
-					if index+1 < len(valueMap.Order) {
+					if index+1 < len(valueMap.Order) || start < len(diffs) {
 						fmt.Fprint(w, ",")
 					}
 					fmt.Fprint(w, "\n")
@@ -380,7 +380,7 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 					value := valueArray[index]
 					fmt.Fprintf(w, " %s%s", indentStr, indentation)
 					value.Print(w, " ", indent+1, true)
-					if index+1 < len(valueArray) {
+					if index+1 < len(valueArray) || start < len(diffs) {
 						fmt.Fprint(w, ",")
 					}
 					fmt.Fprint(w, "\n")

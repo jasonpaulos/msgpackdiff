@@ -197,7 +197,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 				}
 			}
 		} else {
-			lcs := longestCommonSubsequence(mapA.Order, mapB.Order)
+			lcs := lcsStrings(mapA.Order, mapB.Order)
 			if brief && !ignoreEmpty && (len(lcs) != len(mapA.Order) || len(lcs) != len(mapB.Order)) {
 				equal = false
 			} else {
@@ -299,41 +299,64 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 		if brief && len(arrayA) != len(arrayB) {
 			equal = false
 		} else {
-			var largeArray *[]MsgpObject
-			var smallArray *[]MsgpObject
-			if len(arrayA) >= len(arrayB) {
-				largeArray = &arrayA
-				smallArray = &arrayB
-			} else {
-				largeArray = &arrayB
-				smallArray = &arrayA
+			equal = true
+			lcs := lcsObjects(arrayA, arrayB)
+
+			indexA := 0
+			indexB := 0
+
+			for _, indexPair := range lcs {
+				lcsIndexA := indexPair[0]
+				lcsIndexB := indexPair[1]
+				deleted := false
+
+				for ; indexA < lcsIndexA; indexA++ {
+					value := arrayA[indexA]
+					if !ignoreEmpty || !value.IsEmpty() {
+						reporter.SetIndex(indexA)
+						reporter.LogDeletion(value)
+						equal = false
+						deleted = true
+					}
+				}
+				indexA++
+
+				if deleted {
+					reporter.SetIndex(lcsIndexA - 1)
+				} else {
+					reporter.SetIndex(lcsIndexA)
+				}
+				for ; indexB < lcsIndexB; indexB++ {
+					value := arrayB[indexB]
+					if !ignoreEmpty || !value.IsEmpty() {
+						reporter.LogAddition(value)
+						equal = false
+					}
+				}
+				indexB++
 			}
 
-			equal = true
-			for i := 0; i < len(*largeArray); i++ {
-				reporter.SetIndex(i)
+			// report differences for keys that occur after the last LCS index
+			if !brief || equal {
+				for ; indexA < len(arrayA); indexA++ {
+					value := arrayA[indexA]
 
-				if i >= len(*smallArray) {
-					// can assume brief=false here
-					equal = false
+					if !ignoreEmpty || !value.IsEmpty() {
+						reporter.SetIndex(indexA)
+						reporter.LogDeletion(value)
 
-					// report missing items from smallArray
-					if smallArray == &arrayA {
-						reporter.LogAddition(arrayB[i])
-					} else {
-						reporter.LogDeletion(arrayA[i])
+						equal = false
 					}
-
-					continue
 				}
 
-				itemA := arrayA[i]
-				itemB := arrayB[i]
-				itemsEqual := compareObjects(reporter, itemA, itemB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
-				if !itemsEqual {
-					equal = false
-					if brief {
-						break
+				for ; indexB < len(arrayB); indexB++ {
+					value := arrayB[indexB]
+
+					if !ignoreEmpty || !value.IsEmpty() {
+						reporter.SetIndex(indexA)
+						reporter.LogAddition(value)
+
+						equal = false
 					}
 				}
 			}
@@ -381,9 +404,9 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 	return
 }
 
-// longestCommonSubsequence returns a solution to the longest subsequence problem for a and b.
+// lcsStrings returns a solution to the longest subsequence problem for string slices a and b.
 // Based on https://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Solution_for_two_sequences
-func longestCommonSubsequence(a []string, b []string) []string {
+func lcsStrings(a []string, b []string) []string {
 	// make b the smaller slice
 	if len(a) < len(b) {
 		a, b = b, a
@@ -398,6 +421,35 @@ func longestCommonSubsequence(a []string, b []string) []string {
 		for indexB, itemB := range b {
 			if itemA == itemB {
 				currentRow[indexB+1] = append(prevRow[indexB], itemB)
+			} else {
+				above := prevRow[indexB+1]
+				left := currentRow[indexB]
+				if len(above) > len(left) {
+					currentRow[indexB+1] = above
+				} else {
+					currentRow[indexB+1] = left
+				}
+			}
+		}
+	}
+
+	return currentRow[len(b)]
+}
+
+// lcsObjects returns a solution to the longest subsequence problem for MsgpObject slices a and b.
+// Based on https://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Solution_for_two_sequences
+func lcsObjects(a []MsgpObject, b []MsgpObject) [][2]int {
+	prevRow := make([][][2]int, len(b)+1)
+	currentRow := make([][][2]int, len(b)+1)
+
+	reporter := Reporter{Brief: true}
+
+	for indexA, itemA := range a {
+		prevRow, currentRow = currentRow, prevRow
+
+		for indexB, itemB := range b {
+			if compareObjects(&reporter, itemA, itemB, false, true, false, false) {
+				currentRow[indexB+1] = append(prevRow[indexB], [2]int{indexA, indexB})
 			} else {
 				above := prevRow[indexB+1]
 				left := currentRow[indexB]

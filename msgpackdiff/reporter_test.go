@@ -423,6 +423,32 @@ func TestObjectAdditionEnd2(t *testing.T) {
 	}
 }
 
+func TestObjectSwap(t *testing.T) {
+	a, _ := GetBinary("gqFhAaFiAg==") // {"a":1,"b":2}
+	b, _ := GetBinary("gqFiAqFhAQ==") // {"b":2,"a":1}
+
+	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+%s-  "a": 1,%s
+   "b": 2,
+%s+  "a": 1%s
+ }
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectContextSingle(t *testing.T) {
 	a, _ := GetBinary("iqFhAaFiAqFjA6FkBKFlBaFmBqFnB6FoCKFpCaFqCg==") // {"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10}
 	b, _ := GetBinary("iqFhAaFiAqFjA6FkBKFlMqFmBqFnB6FoCKFpCaFqCg==") // {"a":1,"b":2,"c":3,"d":4,"e":50,"f":6,"g":7,"h":8,"i":9,"j":10}
@@ -862,6 +888,32 @@ func TestArrayChange(t *testing.T) {
 	}
 }
 
+func TestArraySwap(t *testing.T) {
+	a, _ := GetBinary("kgEC") // [1, 2]
+	b, _ := GetBinary("kgIB") // [2, 1]
+
+	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` [
+%s-  1,%s
+   2,
+%s+  1%s
+ ]
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestArrayContextSingle(t *testing.T) {
 	a, _ := GetBinary("mgECAwQFBgcICQo=") // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 	b, _ := GetBinary("mgECAwQyBgcICQo=") // [1, 2, 3, 4, 50, 6, 7, 8, 9, 10]
@@ -1029,12 +1081,11 @@ func TestEmbeddedArray(t *testing.T) {
    "level": 1,
    "data": [
 %s-    1,%s
-%s+    2,%s
-%s-    2%s
+     2,
 %s+    1%s
    ]
  }
-`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String(), chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
 
 	if expected != actual {
