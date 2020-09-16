@@ -118,6 +118,31 @@ func TestIntLevel3(t *testing.T) {
 	}
 }
 
+func TestBinary(t *testing.T) {
+	a, _ := GetBinary("gaRjb2RlxAZ2YWx1ZTE=") // {"code":base64(dmFsdWUx)}
+	b, _ := GetBinary("gaRjb2RlxAZ2YWx1ZTI=") // {"code":base64(dmFsdWUy)}
+
+	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+%s-  "code": base64(dmFsdWUx)%s
+%s+  "code": base64(dmFsdWUy)%s
+ }
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectDeletionEmpty(t *testing.T) {
 	a, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
 	b, _ := GetBinary("gA==")             // {}

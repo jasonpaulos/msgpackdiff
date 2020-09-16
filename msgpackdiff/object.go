@@ -1,6 +1,7 @@
 package msgpackdiff
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math"
@@ -130,6 +131,8 @@ func (mo MsgpObject) Print(w io.Writer, prefix string, indent int, inline bool) 
 		fmt.Fprint(w, "null")
 	case msgp.StrType:
 		fmt.Fprint(w, escapeString(mo.Value.(string)))
+	case msgp.BinType:
+		fmt.Fprintf(w, "base64(%s)", base64.StdEncoding.EncodeToString(mo.Value.([]byte)))
 	default:
 		fmt.Fprintf(w, "%v", mo.Value)
 	}

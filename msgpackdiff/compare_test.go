@@ -183,6 +183,42 @@ func TestCompareDefault(t *testing.T) {
 			SecondObject: "kQI=", // [2]
 			Expected:     false,
 		},
+		{
+			Name:         "empty strings",
+			FirstObject:  "oA==", // ""
+			SecondObject: "oA==", // ""
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty strings",
+			FirstObject:  "pHRlc3Q=", // "test"
+			SecondObject: "pHRlc3Q=", // "test"
+			Expected:     true,
+		},
+		{
+			Name:         "different strings",
+			FirstObject:  "pHRlc3Q=", // "test"
+			SecondObject: "pXRlc3Qy", // "test2"
+			Expected:     false,
+		},
+		{
+			Name:         "empty binary strings",
+			FirstObject:  "xAA=", // base64()
+			SecondObject: "xAA=", // base64()
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty binary strings",
+			FirstObject:  "xAR0ZXN0", // base64(dGVzdA==)
+			SecondObject: "xAR0ZXN0", // base64(dGVzdA==)
+			Expected:     true,
+		},
+		{
+			Name:         "different binary strings",
+			FirstObject:  "xAR0ZXN0",     // base64(dGVzdA==)
+			SecondObject: "xAV0ZXN0Mg==", // base64(dGVzdDI=)
+			Expected:     false,
+		},
 	}
 
 	runTestsWithOptions(t, tests, false, false, false)
@@ -254,6 +290,18 @@ func TestCompareIgnoreEmpty(t *testing.T) {
 			Name:         "nonempty string",
 			FirstObject:  "gA==",             // {}
 			SecondObject: "gaRuYW1lpUphc29u", // {"name": "Jason"}
+			Expected:     false,
+		},
+		{
+			Name:         "empty binary string",
+			FirstObject:  "gA==",         // {}
+			SecondObject: "gaNrZXnEAA==", // {"key": base64()}
+			Expected:     true,
+		},
+		{
+			Name:         "nonempty binary string",
+			FirstObject:  "gA==",             // {}
+			SecondObject: "gaNrZXnEBHRlc3Q=", // {"key": base64(dGVzdA==)}
 			Expected:     false,
 		},
 		{

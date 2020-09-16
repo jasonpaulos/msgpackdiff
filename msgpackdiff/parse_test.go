@@ -91,6 +91,14 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			Name:  "base64()",
+			Input: "xAA=",
+			Expected: MsgpObject{
+				msgp.BinType,
+				[]byte{},
+			},
+		},
+		{
 			Name:  "null",
 			Input: "wA==",
 			Expected: MsgpObject{
@@ -152,6 +160,14 @@ func TestParse(t *testing.T) {
 			Expected: MsgpObject{
 				msgp.StrType,
 				"just_a_string",
+			},
+		},
+		{
+			Name:  "base64(anVzdCBhIGJpbmFyeSBzdHJpbmc=)",
+			Input: "xBRqdXN0IGEgYmluYXJ5IHN0cmluZw==", // binary("just a binary string")
+			Expected: MsgpObject{
+				msgp.BinType,
+				[]byte{106, 117, 115, 116, 32, 97, 32, 98, 105, 110, 97, 114, 121, 32, 115, 116, 114, 105, 110, 103},
 			},
 		},
 		{
