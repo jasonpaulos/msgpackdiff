@@ -814,7 +814,7 @@ func TestObjectContextSingle(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
-   ...
+   ... 1 skipped value
    "b": 2,
    "c": 3,
    "d": 4,
@@ -823,7 +823,7 @@ func TestObjectContextSingle(t *testing.T) {
    "f": 6,
    "g": 7,
    "h": 8,
-   ...
+   ... 2 skipped values
  }
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
@@ -847,7 +847,7 @@ func TestObjectContextOverlap(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
-   ...
+   ... 1 skipped value
    "b": 2,
    "c": 3,
    "d": 4,
@@ -859,7 +859,7 @@ func TestObjectContextOverlap(t *testing.T) {
    "h": 8,
    "i": 9,
    "j": 10,
-   ...
+   ... 2 skipped values
  }
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String(), chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
@@ -883,7 +883,7 @@ func TestObjectContextAdjacent(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
-   ...
+   ... 1 skipped value
    "b": 2,
    "c": 3,
    "d": 4,
@@ -900,7 +900,7 @@ func TestObjectContextAdjacent(t *testing.T) {
    "m": 13,
    "n": 14,
    "o": 15,
-   ...
+   ... 1 skipped value
  }
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String(), chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
@@ -924,7 +924,7 @@ func TestObjectContextSeparate(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
-   ...
+   ... 1 skipped value
    "b": 2,
    "c": 3,
    "d": 4,
@@ -933,7 +933,7 @@ func TestObjectContextSeparate(t *testing.T) {
    "f": 6,
    "g": 7,
    "h": 8,
-   ...
+   ... 2 skipped values
    "k": 11,
    "l": 12,
    "m": 13,
@@ -1279,7 +1279,7 @@ func TestArrayContextSingle(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
-   ...
+   ... 1 skipped value
    2,
    3,
    4,
@@ -1288,7 +1288,7 @@ func TestArrayContextSingle(t *testing.T) {
    6,
    7,
    8,
-   ...
+   ... 2 skipped values
  ]
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
@@ -1312,7 +1312,7 @@ func TestArrayContextOverlap(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
-   ...
+   ... 1 skipped value
    2,
    3,
    4,
@@ -1324,7 +1324,7 @@ func TestArrayContextOverlap(t *testing.T) {
    8,
    9,
    10,
-   ...
+   ... 2 skipped values
  ]
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String(), chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
@@ -1348,7 +1348,7 @@ func TestArrayContextAdjacent(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
-   ...
+   ... 1 skipped value
    2,
    3,
    4,
@@ -1365,7 +1365,7 @@ func TestArrayContextAdjacent(t *testing.T) {
    13,
    14,
    15,
-   ...
+   ... 1 skipped value
  ]
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String(), chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
@@ -1389,7 +1389,7 @@ func TestArrayContextSeparate(t *testing.T) {
 	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
-   ...
+   ... 1 skipped value
    2,
    3,
    4,
@@ -1398,7 +1398,7 @@ func TestArrayContextSeparate(t *testing.T) {
    6,
    7,
    8,
-   ...
+   ... 2 skipped values
    11,
    12,
    13,

@@ -179,7 +179,12 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 			layer := diff.Path[0]
 
 			if layer.CurrentIndex-context > lastContextIndex {
-				fmt.Fprintf(w, " %s%s...\n", indentStr, indentation)
+				skipped := layer.CurrentIndex - context - lastContextIndex
+				s := "s"
+				if skipped == 1 {
+					s = ""
+				}
+				fmt.Fprintf(w, " %s%s... %d skipped value%s\n", indentStr, indentation, skipped, s)
 			}
 
 			for i := context; i > 0; i-- {
@@ -281,7 +286,12 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 		}
 
 		if lastContextIndex < len(valueMap.Order) {
-			fmt.Fprintf(w, " %s%s...\n", indentStr, indentation)
+			skipped := len(valueMap.Order) - lastContextIndex
+			s := "s"
+			if skipped == 1 {
+				s = ""
+			}
+			fmt.Fprintf(w, " %s%s... %d skipped value%s\n", indentStr, indentation, skipped, s)
 		}
 
 		fmt.Fprintf(w, " %s}", indentStr)
@@ -295,7 +305,12 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 			layer := diff.Path[0]
 
 			if layer.CurrentIndex-context > lastContextIndex {
-				fmt.Fprintf(w, " %s%s...\n", indentStr, indentation)
+				skipped := layer.CurrentIndex - context - lastContextIndex
+				s := "s"
+				if skipped == 1 {
+					s = ""
+				}
+				fmt.Fprintf(w, " %s%s... %d skipped value%s\n", indentStr, indentation, skipped, s)
 			}
 
 			for i := context; i > 0; i-- {
@@ -393,7 +408,12 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 		}
 
 		if lastContextIndex < len(valueArray) {
-			fmt.Fprintf(w, " %s%s...\n", indentStr, indentation)
+			skipped := len(valueArray) - lastContextIndex
+			s := "s"
+			if skipped == 1 {
+				s = ""
+			}
+			fmt.Fprintf(w, " %s%s... %d skipped value%s\n", indentStr, indentation, skipped, s)
 		}
 
 		fmt.Fprintf(w, " %s]", indentStr)
