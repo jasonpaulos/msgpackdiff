@@ -8,23 +8,40 @@ import (
 	"github.com/algorand/msgp/msgp"
 )
 
+// CompareResult is the result of a comparison between two MsgpObjects.
 type CompareResult struct {
+	// If the objects are determined to be equal, this will be true true. Otherwise, false.
 	Equal    bool
 	Reporter Reporter
-	Objects  [2]MsgpObject
+	// The two objects being compared.
+	Objects [2]MsgpObject
 }
 
+// PrintReport prints a difference report of the CompareResult object to the io.Writer w.
 func (result CompareResult) PrintReport(w io.Writer) {
 	if !result.Reporter.Brief && !result.Equal {
 		result.Objects[0].PrintDiff(w, 3, result.Reporter.Differences, 0, false)
 	}
 }
 
+// CompareOptions are the options used in a call to Compare.
+type CompareOptions struct {
+	// Causes the comparison to exit as soon as a difference is detected and disables reporting the
+	// comparison when true.
+	Brief bool
+	// Treats missing fields as empty objects for comparison when true.
+	IgnoreEmpty bool
+	// Ignores ordering of object keys for comparison when true.
+	IgnoreOrder bool
+	// Compares all numerical values regardless of their type when true. Some precision may be lost.
+	FlexibleTypes bool
+}
+
 // Compare checks two MessagePack objects for equality. The first return value will be true if and
 // only if the objects a and b are considered equivalent. If the second return value is a non-nil
 // error, then the comparison could not be completed and the first return value should be ignored.
-func Compare(a []byte, b []byte, brief, ignoreEmpty, ignoreOrder, flexibleTypes bool) (result CompareResult, err error) {
-	result.Reporter.Brief = brief
+func Compare(a []byte, b []byte, options CompareOptions) (result CompareResult, err error) {
+	result.Reporter.Brief = options.Brief
 
 	result.Objects[0], _, err = Parse(a)
 	if err != nil {
@@ -36,7 +53,7 @@ func Compare(a []byte, b []byte, brief, ignoreEmpty, ignoreOrder, flexibleTypes 
 		return
 	}
 
-	result.Equal = compareObjects(&result.Reporter, result.Objects[0], result.Objects[1], ignoreOrder, brief, ignoreEmpty, flexibleTypes)
+	result.Equal = compareObjects(&result.Reporter, result.Objects[0], result.Objects[1], options)
 
 	return
 }
@@ -115,9 +132,9 @@ func compareNumbers(a MsgpObject, b MsgpObject) (equal bool) {
 	return
 }
 
-func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder, brief, ignoreEmpty, flexibleTypes bool) (equal bool) {
+func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, options CompareOptions) (equal bool) {
 	if a.Type != b.Type {
-		if flexibleTypes && compareNumbers(a, b) {
+		if options.FlexibleTypes && compareNumbers(a, b) {
 			equal = true
 			return
 		}
@@ -142,9 +159,9 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 		mapB := b.Value.(MsgpMap)
 		reporter.EnterMap(a)
 		defer reporter.LeaveMap()
-		if brief && !ignoreEmpty && len(mapA.Values) != len(mapB.Values) {
+		if options.Brief && !options.IgnoreEmpty && len(mapA.Values) != len(mapB.Values) {
 			equal = false
-		} else if ignoreOrder {
+		} else if options.IgnoreOrder {
 			equal = true
 
 			for index, key := range mapA.Order {
@@ -154,23 +171,23 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 				reporter.SetKey(index, key)
 
 				if !ok {
-					if ignoreEmpty && valueA.IsEmpty() {
+					if options.IgnoreEmpty && valueA.IsEmpty() {
 						continue
 					}
 
 					reporter.LogDeletion(valueA)
 
 					equal = false
-					if brief {
+					if options.Brief {
 						break
 					}
 					continue
 				}
 
-				valuesEqual := compareObjects(reporter, valueA, valueB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
+				valuesEqual := compareObjects(reporter, valueA, valueB, options)
 				if !valuesEqual {
 					equal = false
-					if brief {
+					if options.Brief {
 						break
 					}
 				}
@@ -184,7 +201,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 					continue
 				}
 
-				if ignoreEmpty && valueB.IsEmpty() {
+				if options.IgnoreEmpty && valueB.IsEmpty() {
 					continue
 				}
 
@@ -193,13 +210,13 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 
 				equal = false
 
-				if brief {
+				if options.Brief {
 					break
 				}
 			}
 		} else {
 			lcs := lcsStrings(mapA.Order, mapB.Order)
-			if brief && !ignoreEmpty && (len(lcs) != len(mapA.Order) || len(lcs) != len(mapB.Order)) {
+			if options.Brief && !options.IgnoreEmpty && (len(lcs) != len(mapA.Order) || len(lcs) != len(mapB.Order)) {
 				equal = false
 			} else {
 				equal = true
@@ -218,7 +235,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 							break
 						}
 
-						if !ignoreEmpty || !mapA.Values[keyA].IsEmpty() {
+						if !options.IgnoreEmpty || !mapA.Values[keyA].IsEmpty() {
 							reporter.SetKey(indexA, keyA)
 							reporter.LogDeletion(mapA.Values[keyA])
 
@@ -226,7 +243,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 						}
 					}
 
-					if brief && !equal {
+					if options.Brief && !equal {
 						break
 					}
 
@@ -238,7 +255,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 							break
 						}
 
-						if !ignoreEmpty || !mapB.Values[keyB].IsEmpty() {
+						if !options.IgnoreEmpty || !mapB.Values[keyB].IsEmpty() {
 							reporter.SetKey(indexA-1, keyB)
 							reporter.LogAddition(mapB.Values[keyB])
 
@@ -246,7 +263,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 						}
 					}
 
-					if brief && !equal {
+					if options.Brief && !equal {
 						break
 					}
 
@@ -256,10 +273,10 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 
 						reporter.SetKey(indexA-1, keyLCS)
 
-						valuesEqual := compareObjects(reporter, valueA, valueB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)
+						valuesEqual := compareObjects(reporter, valueA, valueB, options)
 						if !valuesEqual {
 							equal = false
-							if brief {
+							if options.Brief {
 								break
 							}
 						}
@@ -267,11 +284,11 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 				}
 
 				// report differences for keys that occur after the last LCS key
-				if !brief || equal {
+				if !options.Brief || equal {
 					for ; indexA < len(mapA.Order); indexA++ {
 						keyA := mapA.Order[indexA]
 
-						if !ignoreEmpty || !mapA.Values[keyA].IsEmpty() {
+						if !options.IgnoreEmpty || !mapA.Values[keyA].IsEmpty() {
 							reporter.SetKey(indexA, keyA)
 							reporter.LogDeletion(mapA.Values[keyA])
 
@@ -282,7 +299,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 					for ; indexB < len(mapB.Order); indexB++ {
 						keyB := mapB.Order[indexB]
 
-						if !ignoreEmpty || !mapB.Values[keyB].IsEmpty() {
+						if !options.IgnoreEmpty || !mapB.Values[keyB].IsEmpty() {
 							reporter.SetKey(indexA, keyB)
 							reporter.LogAddition(mapB.Values[keyB])
 
@@ -297,11 +314,11 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 		arrayB := b.Value.([]MsgpObject)
 		reporter.EnterArray(a)
 		defer reporter.LeaveArray()
-		if brief && len(arrayA) != len(arrayB) {
+		if options.Brief && len(arrayA) != len(arrayB) {
 			equal = false
 		} else {
 			equal = true
-			lcs := lcsObjects(arrayA, arrayB)
+			lcs := lcsObjects(arrayA, arrayB, options)
 
 			indexA := 0
 			indexB := 0
@@ -313,7 +330,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 
 				for ; indexA < lcsIndexA; indexA++ {
 					value := arrayA[indexA]
-					if !ignoreEmpty || !value.IsEmpty() {
+					if !options.IgnoreEmpty || !value.IsEmpty() {
 						reporter.SetIndex(indexA)
 						reporter.LogDeletion(value)
 						equal = false
@@ -329,7 +346,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 				}
 				for ; indexB < lcsIndexB; indexB++ {
 					value := arrayB[indexB]
-					if !ignoreEmpty || !value.IsEmpty() {
+					if !options.IgnoreEmpty || !value.IsEmpty() {
 						reporter.LogAddition(value)
 						equal = false
 					}
@@ -338,11 +355,11 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 			}
 
 			// report differences for keys that occur after the last LCS index
-			if !brief || equal {
+			if !options.Brief || equal {
 				for ; indexA < len(arrayA); indexA++ {
 					value := arrayA[indexA]
 
-					if !ignoreEmpty || !value.IsEmpty() {
+					if !options.IgnoreEmpty || !value.IsEmpty() {
 						reporter.SetIndex(indexA)
 						reporter.LogDeletion(value)
 
@@ -353,7 +370,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 				for ; indexB < len(arrayB); indexB++ {
 					value := arrayB[indexB]
 
-					if !ignoreEmpty || !value.IsEmpty() {
+					if !options.IgnoreEmpty || !value.IsEmpty() {
 						reporter.SetIndex(indexA)
 						reporter.LogAddition(value)
 
@@ -439,7 +456,8 @@ func lcsStrings(a []string, b []string) []string {
 
 // lcsObjects returns a solution to the longest subsequence problem for MsgpObject slices a and b.
 // Based on https://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Solution_for_two_sequences
-func lcsObjects(a []MsgpObject, b []MsgpObject) [][2]int {
+func lcsObjects(a []MsgpObject, b []MsgpObject, options CompareOptions) [][2]int {
+	options.Brief = true
 	prevRow := make([][][2]int, len(b)+1)
 	currentRow := make([][][2]int, len(b)+1)
 
@@ -449,7 +467,7 @@ func lcsObjects(a []MsgpObject, b []MsgpObject) [][2]int {
 		prevRow, currentRow = currentRow, prevRow
 
 		for indexB, itemB := range b {
-			if compareObjects(&reporter, itemA, itemB, false, true, false, false) {
+			if compareObjects(&reporter, itemA, itemB, options) {
 				currentRow[indexB+1] = append(prevRow[indexB], [2]int{indexA, indexB})
 			} else {
 				above := prevRow[indexB+1]

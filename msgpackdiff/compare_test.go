@@ -14,7 +14,7 @@ type CompareTest struct {
 	Expected     bool
 }
 
-func runTestsWithOptions(t *testing.T, tests []CompareTest, ignoreEmpty, ignoreOrder, flexibleTypes bool) {
+func runTestsWithOptions(t *testing.T, tests []CompareTest, options CompareOptions) {
 	for _, test := range tests {
 		runTest := func(t *testing.T) {
 			firstObject, err := base64.StdEncoding.DecodeString(test.FirstObject)
@@ -27,12 +27,14 @@ func runTestsWithOptions(t *testing.T, tests []CompareTest, ignoreEmpty, ignoreO
 				t.Fatalf("Could not decode second object \"%v\": %v\n", test.SecondObject, err)
 			}
 
-			result, err := Compare(firstObject, secondObject, false, ignoreEmpty, ignoreOrder, flexibleTypes)
+			options.Brief = false
+			result, err := Compare(firstObject, secondObject, options)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v\n", err)
 			}
 
-			stopEarlyResult, err := Compare(firstObject, secondObject, true, ignoreEmpty, ignoreOrder, flexibleTypes)
+			options.Brief = false
+			stopEarlyResult, err := Compare(firstObject, secondObject, options)
 			if err != nil {
 				t.Fatalf("Unexpected stop early error: %v\n", err)
 			}
@@ -221,7 +223,7 @@ func TestCompareDefault(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, false, false)
+	runTestsWithOptions(t, tests, CompareOptions{})
 }
 
 func TestCompareIgnoreEmpty(t *testing.T) {
@@ -372,7 +374,7 @@ func TestCompareIgnoreEmpty(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, true, false, false)
+	runTestsWithOptions(t, tests, CompareOptions{IgnoreEmpty: true})
 }
 
 func TestCompareIgnoreOrderTypes(t *testing.T) {
@@ -415,7 +417,7 @@ func TestCompareIgnoreOrderTypes(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, true, false)
+	runTestsWithOptions(t, tests, CompareOptions{IgnoreOrder: true})
 }
 
 func TestCompareFlexibleTypes(t *testing.T) {
@@ -452,7 +454,7 @@ func TestCompareFlexibleTypes(t *testing.T) {
 		},
 	}
 
-	runTestsWithOptions(t, tests, false, false, true)
+	runTestsWithOptions(t, tests, CompareOptions{FlexibleTypes: true})
 }
 
 func TestLCSStrings(t *testing.T) {
@@ -574,6 +576,7 @@ func TestLCSObjects(t *testing.T) {
 		Name      string
 		FirstSeq  []MsgpObject
 		SecondSeq []MsgpObject
+		Options   CompareOptions
 		Expected  [][2]int
 	}
 
@@ -870,6 +873,9 @@ func TestLCSObjects(t *testing.T) {
 				}, {
 					Type:  msgp.IntType,
 					Value: int64(2),
+				}, {
+					Type:  msgp.IntType,
+					Value: int64(3),
 				},
 			},
 			SecondSeq: []MsgpObject{
@@ -882,6 +888,212 @@ func TestLCSObjects(t *testing.T) {
 				},
 			},
 			Expected: [][2]int{{0, 0}, {1, 1}},
+		},
+		{
+			Name: "objects",
+			FirstSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"a"},
+						map[string]MsgpObject{
+							"a": {msgp.IntType, int64(1)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b"},
+						map[string]MsgpObject{
+							"b": {msgp.IntType, int64(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b"},
+						map[string]MsgpObject{
+							"b": {msgp.IntType, int64(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			Expected: [][2]int{{1, 0}, {2, 1}},
+		},
+		{
+			Name: "objects ignore empty",
+			FirstSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"a"},
+						map[string]MsgpObject{
+							"a": {msgp.IntType, int64(1)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b"},
+						map[string]MsgpObject{
+							"b": {msgp.IntType, int64(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b"},
+						map[string]MsgpObject{
+							"b": {msgp.IntType, int64(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c", "empty"},
+						map[string]MsgpObject{
+							"c":     {msgp.IntType, int64(3)},
+							"empty": {msgp.NilType, nil},
+						},
+					},
+				},
+			},
+			Options:  CompareOptions{IgnoreEmpty: true},
+			Expected: [][2]int{{1, 0}, {2, 1}},
+		},
+		{
+			Name: "objects flexible types",
+			FirstSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"a"},
+						map[string]MsgpObject{
+							"a": {msgp.IntType, int64(1)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b"},
+						map[string]MsgpObject{
+							"b": {msgp.Float32Type, float32(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b"},
+						map[string]MsgpObject{
+							"b": {msgp.IntType, int64(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			Options:  CompareOptions{FlexibleTypes: true},
+			Expected: [][2]int{{1, 0}, {2, 1}},
+		},
+		{
+			Name: "objects ignore order",
+			FirstSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"a"},
+						map[string]MsgpObject{
+							"a": {msgp.Float32Type, float32(1)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"b", "other"},
+						map[string]MsgpObject{
+							"b":     {msgp.IntType, int64(2)},
+							"other": {msgp.IntType, int64(17)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"other", "b"},
+						map[string]MsgpObject{
+							"other": {msgp.IntType, int64(17)},
+							"b":     {msgp.IntType, int64(2)},
+						},
+					},
+				}, {
+					Type: msgp.MapType,
+					Value: MsgpMap{
+						[]string{"c"},
+						map[string]MsgpObject{
+							"c": {msgp.IntType, int64(3)},
+						},
+					},
+				},
+			},
+			Options:  CompareOptions{IgnoreOrder: true},
+			Expected: [][2]int{{1, 0}, {2, 1}},
 		},
 	}
 
@@ -903,7 +1115,7 @@ func TestLCSObjects(t *testing.T) {
 
 	for _, test := range tests {
 		runTest := func(t *testing.T) {
-			result := lcsObjects(test.FirstSeq, test.SecondSeq)
+			result := lcsObjects(test.FirstSeq, test.SecondSeq, test.Options)
 
 			if !slicesEqual(result, test.Expected) {
 				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)

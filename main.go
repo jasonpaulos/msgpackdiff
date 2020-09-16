@@ -34,7 +34,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	result, err := msgpackdiff.Compare(binA, binB, *brief, *ignoreEmpty, *ignoreOrder, *flexibleTypes)
+	options := msgpackdiff.CompareOptions{
+		Brief:         *brief,
+		IgnoreEmpty:   *ignoreEmpty,
+		IgnoreOrder:   *ignoreOrder,
+		FlexibleTypes: *flexibleTypes,
+	}
+
+	result, err := msgpackdiff.Compare(binA, binB, options)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "An error occurred: %v\n", err)

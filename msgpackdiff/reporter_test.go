@@ -12,7 +12,7 @@ func TestIntLevel0(t *testing.T) {
 	a, _ := GetBinary("AQ==") // 1
 	b, _ := GetBinary("Ag==") // 2
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -35,7 +35,7 @@ func TestIntLevel1(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YQE=") // {"level":1,"data":1}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YQI=") // {"level":1,"data":2}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -61,7 +61,7 @@ func TestIntLevel2(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGEB") // {"level":1,"data":{"level":2,"data":1}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGEC") // {"level":1,"data":{"level":2,"data":2}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -90,7 +90,7 @@ func TestIntLevel3(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6RkYXRhAQ==") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6RkYXRhAg==") // {"level":1,"data":{"level":2,"data":{"level":3,"data":2}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -122,7 +122,7 @@ func TestBinary(t *testing.T) {
 	a, _ := GetBinary("gaRjb2RlxAZ2YWx1ZTE=") // {"code":base64(dmFsdWUx)}
 	b, _ := GetBinary("gaRjb2RlxAZ2YWx1ZTI=") // {"code":base64(dmFsdWUy)}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -147,7 +147,7 @@ func TestObjectDeletionEmpty(t *testing.T) {
 	a, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
 	b, _ := GetBinary("gA==")             // {}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -171,7 +171,7 @@ func TestObjectDeletionEmptyIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
 	b, _ := GetBinary("gA==")             // {}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -195,7 +195,7 @@ func TestObjectDeletionBegin(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -227,7 +227,7 @@ func TestObjectDeletionBeginIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -259,7 +259,7 @@ func TestObjectDeletionMiddle(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -291,7 +291,7 @@ func TestObjectDeletionMiddleIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -323,7 +323,7 @@ func TestObjectDeletionEnd(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -355,7 +355,7 @@ func TestObjectDeletionEndIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -387,7 +387,7 @@ func TestObjectDeletionEnd2(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGBpWxldmVsAw==")             // {"level":1,"data":{"level":2,"data":{"level":3}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -419,7 +419,7 @@ func TestObjectDeletionEnd2IgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGBpWxldmVsAw==")             // {"level":1,"data":{"level":2,"data":{"level":3}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -451,7 +451,7 @@ func TestObjectAdditionEmpty(t *testing.T) {
 	a, _ := GetBinary("gA==")             // {}
 	b, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -475,7 +475,7 @@ func TestObjectAdditionEmptyIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gA==")             // {}
 	b, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -499,7 +499,7 @@ func TestObjectAdditionBegin(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -531,7 +531,7 @@ func TestObjectAdditionBeginIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -563,7 +563,7 @@ func TestObjectAdditionMiddle(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -595,7 +595,7 @@ func TestObjectAdditionMiddleIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -627,7 +627,7 @@ func TestObjectAdditionEnd(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -659,7 +659,7 @@ func TestObjectAdditionEndIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -691,7 +691,7 @@ func TestObjectAdditionEnd2(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")                         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGEpWxldmVsA6NlbmTDpGRhdGEBqmFub3RoZXJLZXkA") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1,"anotherKey":0}}}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -724,7 +724,7 @@ func TestObjectAdditionEnd2IgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")                         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGEpWxldmVsA6NlbmTDpGRhdGEBqmFub3RoZXJLZXkA") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1,"anotherKey":0}}}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -757,7 +757,7 @@ func TestObjectSwap(t *testing.T) {
 	a, _ := GetBinary("gqFhAaFiAg==") // {"a":1,"b":2}
 	b, _ := GetBinary("gqFiAqFhAQ==") // {"b":2,"a":1}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -783,7 +783,7 @@ func TestObjectSwapIgnoreOrder(t *testing.T) {
 	a, _ := GetBinary("gqFhAaFiAg==") // {"a":1,"b":2}
 	b, _ := GetBinary("gqFiAqFhAQ==") // {"b":2,"a":1}
 
-	result, _ := Compare(a, b, false, false, true, false)
+	result, _ := Compare(a, b, CompareOptions{IgnoreOrder: true})
 
 	if !result.Equal {
 		t.Error("Wrong result")
@@ -804,7 +804,7 @@ func TestObjectContextSingle(t *testing.T) {
 	a, _ := GetBinary("iqFhAaFiAqFjA6FkBKFlBaFmBqFnB6FoCKFpCaFqCg==") // {"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10}
 	b, _ := GetBinary("iqFhAaFiAqFjA6FkBKFlMqFmBqFnB6FoCKFpCaFqCg==") // {"a":1,"b":2,"c":3,"d":4,"e":50,"f":6,"g":7,"h":8,"i":9,"j":10}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -837,7 +837,7 @@ func TestObjectContextOverlap(t *testing.T) {
 	a, _ := GetBinary("jKFhAaFiAqFjA6FkBKFlBaFmBqFnB6FoCKFpCaFqCqFrC6FsDA==") // {"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10,"k":11,"l":12}
 	b, _ := GetBinary("jKFhAaFiAqFjA6FkBKFlMqFmBqFnRqFoCKFpCaFqCqFrC6FsDA==") // {"a":1,"b":2,"c":3,"d":4,"e":50,"f":6,"g":70,"h":8,"i":9,"j":10,"k":11,"l":12}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -873,7 +873,7 @@ func TestObjectContextAdjacent(t *testing.T) {
 	a, _ := GetBinary("3gAQoWEBoWICoWMDoWQEoWUFoWYGoWcHoWgIoWkJoWoKoWsLoWwMoW0NoW4OoW8PoXAQ") // {"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10,"k":11,"l":12,"m":13,"n":14,"o":15,"p":16}
 	b, _ := GetBinary("3gAQoWEBoWICoWMDoWQEoWUyoWYGoWcHoWgIoWkJoWoKoWsLoWx4oW0NoW4OoW8PoXAQ") // {"a":1,"b":2,"c":3,"d":4,"e":50,"f":6,"g":7,"h":8,"i":9,"j":10,"k":11,"l":120,"m":13,"n":14,"o":15,"p":16}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -914,7 +914,7 @@ func TestObjectContextSeparate(t *testing.T) {
 	a, _ := GetBinary("3gAQoWEBoWICoWMDoWQEoWUFoWYGoWcHoWgIoWkJoWoKoWsLoWwMoW0NoW4OoW8PoXAQ")     // {"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10,"k":11,"l":12,"m":13,"n":14,"o":15,"p":16}
 	b, _ := GetBinary("3gAQoWEBoWICoWMDoWQEoWUyoWYGoWcHoWgIoWkJoWoKoWsLoWwMoW0NoW7MjKFvD6FwEA==") // {"a":1,"b":2,"c":3,"d":4,"e":50,"f":6,"g":7,"h":8,"i":9,"j":10,"k":11,"l":12,"m":13,"n":140,"o":15,"p":16}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -954,7 +954,7 @@ func TestArrayDeletionEmpty(t *testing.T) {
 	a, _ := GetBinary("kQc=") // [7]
 	b, _ := GetBinary("kA==") // []
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -978,7 +978,7 @@ func TestArrayDeletionBegin(t *testing.T) {
 	a, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 	b, _ := GetBinary("k6FioWOhZA==") // ["b","c","d"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1005,7 +1005,7 @@ func TestArrayDeletionMiddle(t *testing.T) {
 	a, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 	b, _ := GetBinary("k6FhoWKhZA==") // ["a","b","d"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1032,7 +1032,7 @@ func TestArrayDeletionEnd(t *testing.T) {
 	a, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 	b, _ := GetBinary("k6FhoWKhYw==") // ["a","b","c"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1059,7 +1059,7 @@ func TestArrayDeletionEnd2(t *testing.T) {
 	a, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 	b, _ := GetBinary("kqFhoWI=")     // ["a","b"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1086,7 +1086,7 @@ func TestArrayAdditionEmpty(t *testing.T) {
 	a, _ := GetBinary("kA==") // []
 	b, _ := GetBinary("kQc=") // [7]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1110,7 +1110,7 @@ func TestArrayAdditionBegin(t *testing.T) {
 	a, _ := GetBinary("k6FioWOhZA==") // ["b","c","d"]
 	b, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1137,7 +1137,7 @@ func TestArrayAdditionMiddle(t *testing.T) {
 	a, _ := GetBinary("k6FhoWKhZA==") // ["a","b","d"]
 	b, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1164,7 +1164,7 @@ func TestArrayAdditionEnd(t *testing.T) {
 	a, _ := GetBinary("k6FhoWKhYw==") // ["a","b","c"]
 	b, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1191,7 +1191,7 @@ func TestArrayAdditionEnd2(t *testing.T) {
 	a, _ := GetBinary("kqFhoWI=")     // ["a","b"]
 	b, _ := GetBinary("lKFhoWKhY6Fk") // ["a","b","c","d"]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1218,7 +1218,7 @@ func TestArrayChange(t *testing.T) {
 	a, _ := GetBinary("kQY=") // [6]
 	b, _ := GetBinary("kQc=") // [7]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1243,7 +1243,7 @@ func TestArraySwap(t *testing.T) {
 	a, _ := GetBinary("kgEC") // [1, 2]
 	b, _ := GetBinary("kgIB") // [2, 1]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1269,7 +1269,7 @@ func TestArrayContextSingle(t *testing.T) {
 	a, _ := GetBinary("mgECAwQFBgcICQo=") // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 	b, _ := GetBinary("mgECAwQyBgcICQo=") // [1, 2, 3, 4, 50, 6, 7, 8, 9, 10]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1302,7 +1302,7 @@ func TestArrayContextOverlap(t *testing.T) {
 	a, _ := GetBinary("nAECAwQFBgcICQoLDA==") // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 	b, _ := GetBinary("nAECAwQyBkYICQoLDA==") // [1, 2, 3, 4, 50, 6, 70, 8, 9, 10, 11, 12]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1338,7 +1338,7 @@ func TestArrayContextAdjacent(t *testing.T) {
 	a, _ := GetBinary("3AAQAQIDBAUGBwgJCgsMDQ4PEA==") // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 	b, _ := GetBinary("3AAQAQIDBDIGBwgJCgt4DQ4PEA==") // [1, 2, 3, 4, 50, 6, 7, 8, 9, 10, 11, 120, 13, 14, 15, 16]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1379,7 +1379,7 @@ func TestArrayContextSeparate(t *testing.T) {
 	a, _ := GetBinary("3AAQAQIDBAUGBwgJCgsMDQ4PEA==") // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 	b, _ := GetBinary("3AAQAQIDBDIGBwgJCgsMDcyMDxA=") // [1, 2, 3, 4, 50, 6, 7, 8, 9, 10, 11, 12, 13, 140, 15, 16]
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -1419,7 +1419,7 @@ func TestEmbeddedArray(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YZIBAg==") // {"level":1,"data":[1, 2]}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YZICAQ==") // {"level":1,"data":[2, 1]}
 
-	result, _ := Compare(a, b, false, false, false, false)
+	result, _ := Compare(a, b, CompareOptions{})
 
 	if result.Equal {
 		t.Error("Wrong result")
