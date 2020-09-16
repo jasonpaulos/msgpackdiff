@@ -164,6 +164,7 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, ignoreOrder,
 					if brief {
 						break
 					}
+					continue
 				}
 
 				valuesEqual := compareObjects(reporter, valueA, valueB, ignoreOrder, brief, ignoreEmpty, flexibleTypes)

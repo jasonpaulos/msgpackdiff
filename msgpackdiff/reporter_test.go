@@ -142,11 +142,67 @@ func TestObjectDeletionEmpty(t *testing.T) {
 	}
 }
 
+func TestObjectDeletionEmptyIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
+	b, _ := GetBinary("gA==")             // {}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+%s-  "key": "value"%s
+ }
+`, chalk.Red.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectDeletionBegin(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
 	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+%s-      "data": 1,%s
+       "level": 3,
+       "end": true
+     }
+   }
+ }
+`, chalk.Red.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectDeletionBeginIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -206,11 +262,75 @@ func TestObjectDeletionMiddle(t *testing.T) {
 	}
 }
 
+func TestObjectDeletionMiddleIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+%s-      "data": 1,%s
+       "end": true
+     }
+   }
+ }
+`, chalk.Red.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectDeletionEnd(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 
 	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+       "end": true,
+%s-      "data": 1%s
+     }
+   }
+ }
+`, chalk.Red.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectDeletionEndIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -270,11 +390,67 @@ func TestObjectDeletionEnd2(t *testing.T) {
 	}
 }
 
+func TestObjectDeletionEnd2IgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGBpWxldmVsAw==")             // {"level":1,"data":{"level":2,"data":{"level":3}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+%s-      "end": true,%s
+%s-      "data": 1%s
+     }
+   }
+ }
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Red.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectAdditionEmpty(t *testing.T) {
 	a, _ := GetBinary("gA==")             // {}
 	b, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
 
 	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+%s+  "key": "value"%s
+ }
+`, chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectAdditionEmptyIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gA==")             // {}
+	b, _ := GetBinary("gaNrZXmldmFsdWU=") // {"key":"value"}
+
+	result, _ := Compare(a, b, false, false, true, false)
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -326,6 +502,38 @@ func TestObjectAdditionBegin(t *testing.T) {
 	}
 }
 
+func TestObjectAdditionBeginIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpGRhdGEBpWxldmVsA6NlbmTD") // {"level":1,"data":{"level":2,"data":{"data":1,"level":3,"end":true}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+       "end": true,
+%s+      "data": 1%s
+     }
+   }
+ }
+`, chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectAdditionMiddle(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
@@ -358,11 +566,75 @@ func TestObjectAdditionMiddle(t *testing.T) {
 	}
 }
 
+func TestObjectAdditionMiddleIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6RkYXRhAaNlbmTD") // {"level":1,"data":{"level":2,"data":{"level":3,"data":1,"end":true}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+       "end": true,
+%s+      "data": 1%s
+     }
+   }
+ }
+`, chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectAdditionEnd(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
 
 	result, _ := Compare(a, b, false, false, false, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+       "end": true,
+%s+      "data": 1%s
+     }
+   }
+ }
+`, chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectAdditionEndIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGDpWxldmVsA6NlbmTDpGRhdGEB") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
 
 	if result.Equal {
 		t.Error("Wrong result")
@@ -423,6 +695,39 @@ func TestObjectAdditionEnd2(t *testing.T) {
 	}
 }
 
+func TestObjectAdditionEnd2IgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGCpWxldmVsA6NlbmTD")                         // {"level":1,"data":{"level":2,"data":{"level":3,"end":true}}}
+	b, _ := GetBinary("gqVsZXZlbAGkZGF0YYKlbGV2ZWwCpGRhdGGEpWxldmVsA6NlbmTDpGRhdGEBqmFub3RoZXJLZXkA") // {"level":1,"data":{"level":2,"data":{"level":3,"end":true,"data":1,"anotherKey":0}}}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := fmt.Sprintf(` {
+   "level": 1,
+   "data": {
+     "level": 2,
+     "data": {
+       "level": 3,
+       "end": true,
+%s+      "data": 1,%s
+%s+      "anotherKey": 0%s
+     }
+   }
+ }
+`, chalk.Green.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
 func TestObjectSwap(t *testing.T) {
 	a, _ := GetBinary("gqFhAaFiAg==") // {"a":1,"b":2}
 	b, _ := GetBinary("gqFiAqFhAQ==") // {"b":2,"a":1}
@@ -442,6 +747,27 @@ func TestObjectSwap(t *testing.T) {
 %s+  "a": 1%s
  }
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectSwapIgnoreOrder(t *testing.T) {
+	a, _ := GetBinary("gqFhAaFiAg==") // {"a":1,"b":2}
+	b, _ := GetBinary("gqFiAqFhAQ==") // {"b":2,"a":1}
+
+	result, _ := Compare(a, b, false, false, true, false)
+
+	if !result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder)
+
+	expected := ""
 	actual := builder.String()
 
 	if expected != actual {
