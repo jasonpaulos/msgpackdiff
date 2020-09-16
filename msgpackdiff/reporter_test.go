@@ -19,7 +19,7 @@ func TestIntLevel0(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(`%s-1
 %s%s+2
@@ -42,7 +42,7 @@ func TestIntLevel1(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -68,7 +68,7 @@ func TestIntLevel2(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -97,7 +97,7 @@ func TestIntLevel3(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -129,7 +129,7 @@ func TestBinary(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
 %s-  "code": base64(dmFsdWUx)%s
@@ -154,7 +154,7 @@ func TestObjectDeletionEmpty(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
 %s-  "key": "value"%s
@@ -178,7 +178,7 @@ func TestObjectDeletionEmptyIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
 %s-  "key": "value"%s
@@ -202,7 +202,7 @@ func TestObjectDeletionBegin(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -234,7 +234,7 @@ func TestObjectDeletionBeginIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -266,7 +266,7 @@ func TestObjectDeletionMiddle(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -298,7 +298,7 @@ func TestObjectDeletionMiddleIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -330,7 +330,7 @@ func TestObjectDeletionEnd(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -362,7 +362,7 @@ func TestObjectDeletionEndIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -394,7 +394,7 @@ func TestObjectDeletionEnd2(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -426,7 +426,7 @@ func TestObjectDeletionEnd2IgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -458,7 +458,7 @@ func TestObjectAdditionEmpty(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
 %s+  "key": "value"%s
@@ -482,7 +482,7 @@ func TestObjectAdditionEmptyIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
 %s+  "key": "value"%s
@@ -506,7 +506,7 @@ func TestObjectAdditionBegin(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -538,7 +538,7 @@ func TestObjectAdditionBeginIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -570,7 +570,7 @@ func TestObjectAdditionMiddle(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -602,7 +602,7 @@ func TestObjectAdditionMiddleIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -634,7 +634,7 @@ func TestObjectAdditionEnd(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -666,7 +666,7 @@ func TestObjectAdditionEndIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -698,7 +698,7 @@ func TestObjectAdditionEnd2(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -731,7 +731,7 @@ func TestObjectAdditionEnd2IgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,
@@ -764,7 +764,7 @@ func TestObjectSwap(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
 %s-  "a": 1,%s
@@ -790,7 +790,7 @@ func TestObjectSwapIgnoreOrder(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := ""
 	actual := builder.String()
@@ -811,7 +811,7 @@ func TestObjectContextSingle(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    ...
@@ -844,7 +844,7 @@ func TestObjectContextOverlap(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    ...
@@ -880,7 +880,7 @@ func TestObjectContextAdjacent(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    ...
@@ -921,7 +921,7 @@ func TestObjectContextSeparate(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    ...
@@ -961,7 +961,7 @@ func TestArrayDeletionEmpty(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
 %s-  7%s
@@ -985,7 +985,7 @@ func TestArrayDeletionBegin(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
 %s-  "a",%s
@@ -1012,7 +1012,7 @@ func TestArrayDeletionMiddle(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    "a",
@@ -1039,7 +1039,7 @@ func TestArrayDeletionEnd(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    "a",
@@ -1066,7 +1066,7 @@ func TestArrayDeletionEnd2(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    "a",
@@ -1093,7 +1093,7 @@ func TestArrayAdditionEmpty(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
 %s+  7%s
@@ -1117,7 +1117,7 @@ func TestArrayAdditionBegin(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
 %s+  "a",%s
@@ -1144,7 +1144,7 @@ func TestArrayAdditionMiddle(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    "a",
@@ -1171,7 +1171,7 @@ func TestArrayAdditionEnd(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    "a",
@@ -1198,7 +1198,7 @@ func TestArrayAdditionEnd2(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    "a",
@@ -1225,7 +1225,7 @@ func TestArrayChange(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
 %s-  6%s
@@ -1250,7 +1250,7 @@ func TestArraySwap(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
 %s-  1,%s
@@ -1276,7 +1276,7 @@ func TestArrayContextSingle(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    ...
@@ -1309,7 +1309,7 @@ func TestArrayContextOverlap(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    ...
@@ -1345,7 +1345,7 @@ func TestArrayContextAdjacent(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    ...
@@ -1386,7 +1386,7 @@ func TestArrayContextSeparate(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` [
    ...
@@ -1426,7 +1426,7 @@ func TestEmbeddedArray(t *testing.T) {
 	}
 
 	var builder strings.Builder
-	result.PrintReport(&builder)
+	result.PrintReport(&builder, 3)
 
 	expected := fmt.Sprintf(` {
    "level": 1,

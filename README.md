@@ -45,3 +45,4 @@ The objects `[A]` and `[B]` can be any of the following:
   NOTE: This flag does not change the behavior of comparing different types within the int8/16/32/64
   family, which are always compared with each other regardless of what length they are. The same is
   true for the uint8/16/32/64 family, but not between the int and uint families.
+* `--context` adjusts the number of nearby fields to show in difference reports. Defaults to 3.

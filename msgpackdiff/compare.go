@@ -18,9 +18,9 @@ type CompareResult struct {
 }
 
 // PrintReport prints a difference report of the CompareResult object to the io.Writer w.
-func (result CompareResult) PrintReport(w io.Writer) {
+func (result CompareResult) PrintReport(w io.Writer, context int) {
 	if !result.Reporter.Brief && !result.Equal {
-		result.Objects[0].PrintDiff(w, 3, result.Reporter.Differences, 0, false)
+		result.Objects[0].PrintDiff(w, context, result.Reporter.Differences, 0, false)
 	}
 }
 

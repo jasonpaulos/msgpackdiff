@@ -8,10 +8,11 @@ import (
 	"github.com/algorand/msgpackdiff/msgpackdiff"
 )
 
-var brief = flag.Bool("brief", false, "Disable comparison report")
-var ignoreEmpty = flag.Bool("ignore-empty", false, "Treat missing fields as empty objects for comparison")
-var ignoreOrder = flag.Bool("ignore-order", false, "Ignore ordering of fields for comparison")
-var flexibleTypes = flag.Bool("flexible-types", false, "Compare all numerical values regardless of their type. May be inaccurate")
+var brief = flag.Bool("brief", false, "Disable comparison report.")
+var ignoreEmpty = flag.Bool("ignore-empty", false, "Treat missing fields as empty objects for comparison.")
+var ignoreOrder = flag.Bool("ignore-order", false, "Ignore ordering of fields for comparison.")
+var flexibleTypes = flag.Bool("flexible-types", false, "Compare all numerical values regardless of their type. May be inaccurate.")
+var context = flag.Int("context", 3, "The number of nearby fields to show in difference reports.")
 
 func main() {
 	flag.Parse()
@@ -19,6 +20,11 @@ func main() {
 
 	if len(args) != 2 {
 		fmt.Fprintln(os.Stderr, "Must specify exactly two objects to compare")
+		os.Exit(2)
+	}
+
+	if *context < 0 {
+		fmt.Fprintln(os.Stderr, "Context must not be negative.")
 		os.Exit(2)
 	}
 
@@ -48,7 +54,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	result.PrintReport(os.Stdout)
+	result.PrintReport(os.Stdout, *context)
 
 	if !result.Equal {
 		fmt.Println("Objects are not equal")
