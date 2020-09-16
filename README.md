@@ -4,6 +4,12 @@ This is a command line tool written in Go that provides a way to compare two arb
 [MessagePack](https://msgpack.org/) encoded objects for equality. It uses the
 [algorand/msgp](https://github.com/algorand/msgp) library to parse MessagePack objects.
 
+## Build
+
+To build the tool, clone the repo and run `make build`. This will place a copy of the `msgpackdiff`
+binary in the `./bin` folder. You can place this binary somewhere on your system path to invoke it
+from anywhere.
+
 ## Usage
 
 The tool can be invoked from the command line like so:
