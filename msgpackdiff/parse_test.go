@@ -335,3 +335,66 @@ func TestParseErrors(t *testing.T) {
 		}
 	})
 }
+
+func TestParseObjectStream(t *testing.T) {
+	input := "gqJpZACkZGF0YQeComlkAaRkYXRhpWhlbGxv"
+
+	bytes, err := base64.StdEncoding.DecodeString(input)
+	if err != nil {
+		t.Fatalf("Could not decode input: %v\n", err)
+	}
+
+	firstObject, bytes, err := Parse(bytes)
+	if err != nil {
+		t.Fatalf("Could parse first object: %v\n", err)
+	}
+
+	secondObject, bytes, err := Parse(bytes)
+	if err != nil {
+		t.Fatalf("Could parse second object: %v\n", err)
+	}
+
+	if len(bytes) != 0 {
+		t.Fatalf("Two objects did not exhaust byte stream")
+	}
+
+	expectedFirstObject := MsgpObject{
+		msgp.MapType,
+		MsgpMap{
+			Order: []string{"id", "data"},
+			Values: map[string]MsgpObject{
+				"id": {
+					msgp.IntType,
+					int64(0),
+				},
+				"data": {
+					msgp.IntType,
+					int64(7),
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(firstObject, expectedFirstObject) {
+		t.Errorf("Incorrect first object: got %+v, expected %+v\n", firstObject, expectedFirstObject)
+	}
+
+	expectedSecondObject := MsgpObject{
+		msgp.MapType,
+		MsgpMap{
+			Order: []string{"id", "data"},
+			Values: map[string]MsgpObject{
+				"id": {
+					msgp.IntType,
+					int64(1),
+				},
+				"data": {
+					msgp.StrType,
+					"hello",
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(secondObject, expectedSecondObject) {
+		t.Errorf("Incorrect second object: got %+v, expected %+v\n", secondObject, expectedSecondObject)
+	}
+}

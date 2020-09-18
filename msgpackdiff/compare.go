@@ -21,7 +21,7 @@ type CompareResult struct {
 // PrintReport prints a difference report of the CompareResult object to the io.Writer w.
 func (result CompareResult) PrintReport(w io.Writer, context int) {
 	if !result.Reporter.Brief && !result.Equal {
-		result.Objects[0].PrintDiff(w, context, result.Reporter.Differences, 0, false)
+		result.Objects[0].PrintDiff(w, context, result.Reporter.Differences, 0, false, true)
 	}
 }
 
@@ -44,14 +44,36 @@ type CompareOptions struct {
 func Compare(a []byte, b []byte, options CompareOptions) (result CompareResult, err error) {
 	result.Reporter.Brief = options.Brief
 
-	result.Objects[0], _, err = Parse(a)
-	if err != nil {
-		return
+	objectsA := []MsgpObject{}
+
+	for len(a) != 0 {
+		var object MsgpObject
+		object, a, err = Parse(a)
+		if err != nil {
+			return
+		}
+		objectsA = append(objectsA, object)
 	}
 
-	result.Objects[1], _, err = Parse(b)
-	if err != nil {
-		return
+	result.Objects[0] = MsgpObject{
+		msgp.ArrayType,
+		objectsA,
+	}
+
+	objectsB := []MsgpObject{}
+
+	for len(b) != 0 {
+		var object MsgpObject
+		object, b, err = Parse(b)
+		if err != nil {
+			return
+		}
+		objectsB = append(objectsB, object)
+	}
+
+	result.Objects[1] = MsgpObject{
+		msgp.ArrayType,
+		objectsB,
 	}
 
 	result.Equal = compareObjects(&result.Reporter, result.Objects[0], result.Objects[1], options)

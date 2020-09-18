@@ -8,7 +8,7 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-func TestIntLevel0(t *testing.T) {
+func TestInt(t *testing.T) {
 	a, _ := GetBinary("AQ==") // 1
 	b, _ := GetBinary("Ag==") // 2
 
@@ -21,9 +21,55 @@ func TestIntLevel0(t *testing.T) {
 	var builder strings.Builder
 	result.PrintReport(&builder, 3)
 
-	expected := fmt.Sprintf(`%s-1
-%s%s+2
-%s`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	expected := fmt.Sprintf(`%s-1%s
+%s+2%s
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestString(t *testing.T) {
+	a, _ := GetBinary("pXRlc3Qx") // "test1"
+	b, _ := GetBinary("pXRlc3Qy") // "test2"
+
+	result, _ := Compare(a, b, CompareOptions{})
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder, 3)
+
+	expected := fmt.Sprintf(`%s-"test1"%s
+%s+"test2"%s
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestBinaryString(t *testing.T) {
+	a, _ := GetBinary("xAV0ZXN0MQ==") // base64(dGVzdDE=)
+	b, _ := GetBinary("xAV0ZXN0Mg==") // base64(dGVzdDI=)
+
+	result, _ := Compare(a, b, CompareOptions{})
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder, 3)
+
+	expected := fmt.Sprintf(`%s-base64(dGVzdDE=)%s
+%s+base64(dGVzdDI=)%s
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
 
 	if expected != actual {
@@ -1465,6 +1511,64 @@ func TestObjectInArray(t *testing.T) {
    },
    "test"
  ]
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestTwoObjects(t *testing.T) {
+	a, _ := GetBinary("gqJpZACkZGF0YQeComlkAaRkYXRhpWhlbGxv") // {"id":0,"data":7}{"id":1,"data":"hello"}
+	b, _ := GetBinary("gqJpZACkZGF0YQeComlkAaRkYXRhpXdvcmxk") // {"id":0,"data":7}{"id":1,"data":"world"}
+
+	result, _ := Compare(a, b, CompareOptions{})
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder, 3)
+
+	expected := fmt.Sprintf(` {
+   "id": 0,
+   "data": 7
+ }
+ {
+   "id": 1,
+%s-  "data": "hello"%s
+%s+  "data": "world"%s
+ }
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestTwoObjectsNoContext(t *testing.T) {
+	a, _ := GetBinary("gqJpZACkZGF0YQeComlkAaRkYXRhpWhlbGxvgqJpZAKkZGF0YVA=") // {"id":0,"data":7}{"id":1,"data":"hello"}{"id":2,"data":80}
+	b, _ := GetBinary("gqJpZACkZGF0YQeComlkAaRkYXRhpXdvcmxkgqJpZAKkZGF0YVA=") // {"id":0,"data":7}{"id":1,"data":"world"}{"id":2,"data":80}
+
+	result, _ := Compare(a, b, CompareOptions{})
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder, 0)
+
+	expected := fmt.Sprintf(` ... 1 skipped object
+ {
+   ... 1 skipped value
+%s-  "data": "hello"%s
+%s+  "data": "world"%s
+ }
+ ... 1 skipped object
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
 
