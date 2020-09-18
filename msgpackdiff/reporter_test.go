@@ -1415,7 +1415,7 @@ func TestArrayContextSeparate(t *testing.T) {
 	}
 }
 
-func TestEmbeddedArray(t *testing.T) {
+func TestArrayInObject(t *testing.T) {
 	a, _ := GetBinary("gqVsZXZlbAGkZGF0YZIBAg==") // {"level":1,"data":[1, 2]}
 	b, _ := GetBinary("gqVsZXZlbAGkZGF0YZICAQ==") // {"level":1,"data":[2, 1]}
 
@@ -1436,6 +1436,35 @@ func TestEmbeddedArray(t *testing.T) {
 %s+    1%s
    ]
  }
+`, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
+	actual := builder.String()
+
+	if expected != actual {
+		t.Fatalf("Invalid report:\nExpected:\n%s\nGot:\n%s\n", expected, actual)
+	}
+}
+
+func TestObjectInArray(t *testing.T) {
+	a, _ := GetBinary("koKlbGV2ZWwBpGRhdGEBpHRlc3Q=") // [{"level":1,"data":1},"test"]
+	b, _ := GetBinary("koKlbGV2ZWwBpGRhdGECpHRlc3Q=") // [{"level":1,"data":2},"test"]
+
+	result, _ := Compare(a, b, CompareOptions{})
+
+	if result.Equal {
+		t.Error("Wrong result")
+	}
+
+	var builder strings.Builder
+	result.PrintReport(&builder, 3)
+
+	expected := fmt.Sprintf(` [
+   {
+     "level": 1,
+%s-    "data": 1%s
+%s+    "data": 2%s
+   },
+   "test"
+ ]
 `, chalk.Red.String(), chalk.ResetColor.String(), chalk.Green.String(), chalk.ResetColor.String())
 	actual := builder.String()
 

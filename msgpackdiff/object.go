@@ -251,7 +251,7 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 					diff.Object.PrintDiff(w, context, subdiffs, indent+1, true)
 				}
 
-				if end < len(diffs) {
+				if end < len(diffs) || layer.CurrentIndex+1 < len(valueMap.Order) {
 					fmt.Fprint(w, ",\n")
 				} else {
 					fmt.Fprint(w, "\n")
@@ -374,7 +374,7 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 					diff.Object.PrintDiff(w, context, subdiffs, indent+1, true)
 				}
 
-				if end < len(diffs) {
+				if end < len(diffs) || layer.CurrentIndex+1 < len(valueArray) {
 					fmt.Fprint(w, ",\n")
 				} else {
 					fmt.Fprint(w, "\n")

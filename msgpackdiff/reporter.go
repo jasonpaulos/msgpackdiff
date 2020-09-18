@@ -89,3 +89,20 @@ func (r *Reporter) LogChange(old MsgpObject, new MsgpObject) {
 	}
 	r.Differences = append(r.Differences, deletion, replacement)
 }
+
+func (r *Reporter) NumDifferences() int {
+	total := 0
+	for _, diff := range r.Differences {
+		if diff.Type != Replacement {
+			total++
+		}
+	}
+	return total
+}
+
+func (r *Reporter) Accept(differences []Difference) {
+	for i := range differences {
+		differences[i].Path = append(r.Path, differences[i].Path...)
+	}
+	r.Differences = append(r.Differences, differences...)
+}

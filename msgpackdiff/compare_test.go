@@ -890,6 +890,32 @@ func TestLCSObjects(t *testing.T) {
 			Expected: [][2]int{{0, 0}, {1, 1}},
 		},
 		{
+			Name: "numbers flexible types",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.IntType,
+					Value: int64(1),
+				}, {
+					Type:  msgp.Float64Type,
+					Value: float64(2),
+				}, {
+					Type:  msgp.IntType,
+					Value: int64(3),
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.IntType,
+					Value: int64(1),
+				}, {
+					Type:  msgp.IntType,
+					Value: int64(2),
+				},
+			},
+			Options:  CompareOptions{FlexibleTypes: true},
+			Expected: [][2]int{{0, 0}, {1, 1}},
+		},
+		{
 			Name: "objects",
 			FirstSeq: []MsgpObject{
 				{
@@ -1095,6 +1121,28 @@ func TestLCSObjects(t *testing.T) {
 			Options:  CompareOptions{IgnoreOrder: true},
 			Expected: [][2]int{{1, 0}, {2, 1}},
 		},
+		{
+			Name: "mixed types",
+			FirstSeq: []MsgpObject{
+				{
+					Type:  msgp.IntType,
+					Value: int64(1),
+				}, {
+					Type:  msgp.IntType,
+					Value: int64(2),
+				},
+			},
+			SecondSeq: []MsgpObject{
+				{
+					Type:  msgp.IntType,
+					Value: int64(1),
+				}, {
+					Type:  msgp.StrType,
+					Value: "two",
+				},
+			},
+			Expected: [][2]int{{0, 0}},
+		},
 	}
 
 	slicesEqual := func(s1 [][2]int, s2 [][2]int) bool {
@@ -1117,8 +1165,14 @@ func TestLCSObjects(t *testing.T) {
 		runTest := func(t *testing.T) {
 			result := lcsObjects(test.FirstSeq, test.SecondSeq, test.Options)
 
-			if !slicesEqual(result, test.Expected) {
-				t.Fatalf("Wrong result: got %v, expected %v\n", result, test.Expected)
+			actualIndices := [][2]int{}
+			for _, member := range result {
+				indices := [2]int{member.indexA, member.indexB}
+				actualIndices = append(actualIndices, indices)
+			}
+
+			if !slicesEqual(actualIndices, test.Expected) {
+				t.Fatalf("Wrong result: got %v, expected %v\n", actualIndices, test.Expected)
 			}
 		}
 		t.Run(test.Name, runTest)

@@ -3,6 +3,7 @@ package msgpackdiff
 import (
 	"bytes"
 	"io"
+	"math"
 	"time"
 
 	"github.com/algorand/msgp/msgp"
@@ -224,14 +225,12 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, options Comp
 				indexA := 0
 				indexB := 0
 				for _, keyLCS := range lcs {
-					inLCS := false
 
 					for ; indexA < len(mapA.Order); indexA++ {
 						keyA := mapA.Order[indexA]
 
 						if keyA == keyLCS {
 							indexA++
-							inLCS = true
 							break
 						}
 
@@ -267,18 +266,16 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, options Comp
 						break
 					}
 
-					if inLCS {
-						valueA := mapA.Values[keyLCS]
-						valueB := mapB.Values[keyLCS]
+					valueA := mapA.Values[keyLCS]
+					valueB := mapB.Values[keyLCS]
 
-						reporter.SetKey(indexA-1, keyLCS)
+					reporter.SetKey(indexA-1, keyLCS)
 
-						valuesEqual := compareObjects(reporter, valueA, valueB, options)
-						if !valuesEqual {
-							equal = false
-							if options.Brief {
-								break
-							}
+					valuesEqual := compareObjects(reporter, valueA, valueB, options)
+					if !valuesEqual {
+						equal = false
+						if options.Brief {
+							break
 						}
 					}
 				}
@@ -323,9 +320,9 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, options Comp
 			indexA := 0
 			indexB := 0
 
-			for _, indexPair := range lcs {
-				lcsIndexA := indexPair[0]
-				lcsIndexB := indexPair[1]
+			for _, member := range lcs {
+				lcsIndexA := member.indexA
+				lcsIndexB := member.indexB
 				deleted := false
 
 				for ; indexA < lcsIndexA; indexA++ {
@@ -338,6 +335,10 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, options Comp
 					}
 				}
 				indexA++
+
+				if options.Brief && !equal {
+					break
+				}
 
 				if deleted {
 					reporter.SetIndex(lcsIndexA - 1)
@@ -352,6 +353,20 @@ func compareObjects(reporter *Reporter, a MsgpObject, b MsgpObject, options Comp
 					}
 				}
 				indexB++
+
+				if options.Brief && !equal {
+					break
+				}
+
+				if len(member.diffs) > 0 {
+					reporter.SetIndex(lcsIndexA)
+					reporter.Accept(member.diffs)
+					equal = false
+
+					if options.Brief {
+						break
+					}
+				}
 			}
 
 			// report differences for keys that occur after the last LCS index
@@ -454,21 +469,72 @@ func lcsStrings(a []string, b []string) []string {
 	return currentRow[len(b)]
 }
 
+type lcsMember struct {
+	indexA int
+	indexB int
+	diffs  []Difference
+}
+
 // lcsObjects returns a solution to the longest subsequence problem for MsgpObject slices a and b.
 // Based on https://en.wikipedia.org/wiki/Longest_common_subsequence_problem#Solution_for_two_sequences
-func lcsObjects(a []MsgpObject, b []MsgpObject, options CompareOptions) [][2]int {
-	options.Brief = true
-	prevRow := make([][][2]int, len(b)+1)
-	currentRow := make([][][2]int, len(b)+1)
-
-	reporter := Reporter{Brief: true}
+func lcsObjects(a []MsgpObject, b []MsgpObject, options CompareOptions) []lcsMember {
+	prevRow := make([][]lcsMember, len(b)+1)
+	currentRow := make([][]lcsMember, len(b)+1)
+	differences := make([][]Difference, len(b))
 
 	for indexA, itemA := range a {
 		prevRow, currentRow = currentRow, prevRow
 
+		minDiffs := math.MaxInt32
 		for indexB, itemB := range b {
-			if compareObjects(&reporter, itemA, itemB, options) {
-				currentRow[indexB+1] = append(prevRow[indexB], [2]int{indexA, indexB})
+			reporter := Reporter{
+				Brief: options.Brief,
+				// set Differences to an empty slice since we use nil as a special value below
+				Differences: []Difference{},
+			}
+			if itemA.Type != itemB.Type {
+				// items are different types so they can't be equal, don't even compare them
+				if options.FlexibleTypes && compareNumbers(itemA, itemB) {
+					// unless flexible types is enabled and the items are numbers
+					differences[indexB] = []Difference{}
+					minDiffs = 0
+					continue
+				}
+				differences[indexB] = nil
+				continue
+			}
+			isContainer := itemA.Type == msgp.ArrayType || itemA.Type == msgp.MapType
+			equal := compareObjects(&reporter, itemA, itemB, options)
+			if options.Brief || !isContainer {
+				// if brief is enabled, then the diff count is meaningless
+				// simiarly, if the items aren't containers but are different, ignore the diffs and
+				// just mark them as different
+				if equal {
+					differences[indexB] = []Difference{}
+					minDiffs = 0
+				} else {
+					differences[indexB] = nil
+				}
+				continue
+			}
+
+			differences[indexB] = reporter.Differences
+			if len(differences[indexB]) < minDiffs {
+				minDiffs = len(differences[indexB])
+			}
+		}
+
+		for indexB := range b {
+			// if differences[indexB] is nil, then the items are unquestionably different and diffs
+			// don't apply
+			// if len(differences[indexB]) <= minDiffs, then the items are relatively equal
+			if differences[indexB] != nil && len(differences[indexB]) <= minDiffs {
+				member := lcsMember{
+					indexA: indexA,
+					indexB: indexB,
+					diffs:  differences[indexB],
+				}
+				currentRow[indexB+1] = append(prevRow[indexB], member)
 			} else {
 				above := prevRow[indexB+1]
 				left := currentRow[indexB]
