@@ -457,7 +457,7 @@ func (mo MsgpObject) PrintDiff(w io.Writer, context int, diffs []Difference, ind
 			fmt.Fprintf(w, " %s]", indentStr)
 		}
 	default:
-		panic("Unexpected path")
+		panic(fmt.Sprintf("Unexpected path, type is %v", mo.Type))
 	}
 }
 
